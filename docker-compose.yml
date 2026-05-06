@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: inkstream-app
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    depends_on:
+      - db
+    env_file:
+      - .env
+    environment:
+      - DB_HOST=db # Override DB_HOST to point to the docker-compose service name
+    networks:
+      - inkstream-network
+
+  db:
+    image: postgres:15-alpine
+    container_name: inkstream-db
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-inkstream}
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - inkstream-network
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: inkstream-pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@inkstream.local}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
+    networks:
+      - inkstream-network
+
+volumes:
+  postgres-data:
+
+networks:
+  inkstream-network:
+    driver: bridge
