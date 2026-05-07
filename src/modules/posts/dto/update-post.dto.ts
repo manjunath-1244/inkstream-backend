@@ -8,7 +8,7 @@ export class UpdatePostDto {
 
   @IsOptional()
   @IsString()
-  content?: string;
+  contentMarkdown?: string;
 
   @IsOptional()
   @IsString()
@@ -33,5 +33,5 @@ export class UpdatePostDto {
 
   @IsOptional()
   @IsString()
-  featuredImage?: string;
+  coverImageUrl?: string;
 }

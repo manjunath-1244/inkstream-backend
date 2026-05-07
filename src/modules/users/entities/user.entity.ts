@@ -82,4 +82,12 @@ export class User {
 
   @ManyToMany(() => User, (user) => user.followers)
   following!: User[];
+
+  @ManyToMany(() => User)
+  @JoinTable({
+    name: 'user_blocks',
+    joinColumn: { name: 'blocker_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'blocked_id', referencedColumnName: 'id' },
+  })
+  blockedUsers!: User[];
 }

@@ -12,7 +12,7 @@ import {
 import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
-import { PaginationDto } from './dto/pagination.dto';
+import { PaginationDto } from '../../common/dto/pagination.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -38,9 +38,38 @@ export class PostsController {
   }
 
   @Public()
+  @Get('trending')
+  getTrending(@Query() paginationDto: PaginationDto) {
+    return this.postsService.getTrending(paginationDto);
+  }
+
+  @Public()
+  @Get('search')
+  search(@Query('q') q: string, @Query() paginationDto: PaginationDto) {
+    return this.postsService.searchPosts(q, paginationDto);
+  }
+
+  @Get('me/drafts')
+  @Roles(Role.CREATOR, Role.ADMIN)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  findMyDrafts(@Query() paginationDto: PaginationDto, @CurrentUser() user: any) {
+    return this.postsService.findMyDrafts(user.id, paginationDto);
+  }
+
+  @Public()
   @Get(':idOrSlug')
-  findOne(@Param('idOrSlug') idOrSlug: string) {
-    return this.postsService.findOne(idOrSlug);
+  async findOne(@Param('idOrSlug') idOrSlug: string, @CurrentUser() user: any) {
+    const post = await this.postsService.findOne(idOrSlug);
+    
+    // Increment view count (Simplified for this phase)
+    await this.postsService.incrementViewCount(post.id);
+
+    // Placeholder for Phase 4: Subscription Check
+    // if (post.visibility === PostVisibility.PREMIUM && (!user || !user.isSubscribed)) {
+    //   throw new ForbiddenException('This is premium content');
+    // }
+
+    return post;
   }
 
   @Patch(':id')

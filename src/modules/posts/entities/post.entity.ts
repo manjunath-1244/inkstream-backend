@@ -4,6 +4,7 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  DeleteDateColumn,
   ManyToOne,
   ManyToMany,
   JoinTable,
@@ -36,7 +37,7 @@ export class Post {
   slug!: string;
 
   @Column({ type: 'text' })
-  content!: string;
+  contentMarkdown!: string;
 
   @Column({ nullable: true })
   excerpt?: string;
@@ -61,8 +62,17 @@ export class Post {
   @Column({ default: 0 })
   viewCount!: number;
 
+  @Column({ default: 0 })
+  likeCount!: number;
+
+  @Column({ default: 0 })
+  commentCount!: number;
+
+  @Column({ default: 0 })
+  shareCount!: number;
+
   @Column({ nullable: true })
-  featuredImage?: string;
+  coverImageUrl?: string;
 
   @Column()
   authorId!: string;
@@ -86,6 +96,9 @@ export class Post {
   @UpdateDateColumn()
   updatedAt!: Date;
 
+  @DeleteDateColumn()
+  deletedAt?: Date;
+
   @BeforeInsert()
   @BeforeUpdate()
   generateSlug() {
@@ -98,8 +111,8 @@ export class Post {
   @BeforeInsert()
   @BeforeUpdate()
   calculateReadingTime() {
-    if (this.content) {
-      const words = this.content.split(/\s+/).length;
+    if (this.contentMarkdown) {
+      const words = this.contentMarkdown.split(/\s+/).length;
       this.readingTimeMinutes = Math.ceil(words / 200);
     }
   }

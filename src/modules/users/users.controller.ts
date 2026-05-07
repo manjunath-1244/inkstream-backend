@@ -1,11 +1,14 @@
-import { Controller, Get, Patch, Body, Param, NotFoundException, Post, HttpCode, HttpStatus, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Patch, Body, Param, NotFoundException, Post, Delete, HttpCode, HttpStatus, Query, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Role } from './entities/user.entity';
 import { PostsService } from '../posts/posts.service';
-import { PaginationDto } from '../posts/dto/pagination.dto';
+import { PaginationDto } from '../../common/dto/pagination.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { Public } from '../auth/decorators/public.decorator';
 
 @Controller('users')
 export class UsersController {
@@ -36,6 +39,16 @@ export class UsersController {
     return this.usersService.updateRole(user.id, Role.CREATOR);
   }
 
+  @Patch(':id/role')
+  @Roles(Role.ADMIN)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  async updateRole(
+    @Param('id') id: string,
+    @Body('role') role: Role,
+  ) {
+    return this.usersService.updateRole(id, role);
+  }
+
   @Get(':username')
   async getProfile(@Param('username') username: string) {
     const profile = await this.usersService.getProfile(username);
@@ -51,6 +64,36 @@ export class UsersController {
   async follow(@Param('id') id: string, @CurrentUser() user: any) {
     await this.usersService.follow(user.id, id);
     return { message: 'Followed successfully' };
+  }
+
+  @Delete(':id/follow')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async unfollow(@Param('id') id: string, @CurrentUser() user: any) {
+    await this.usersService.unfollow(user.id, id);
+    return { message: 'Unfollowed successfully' };
+  }
+
+  @Get(':id/is-following')
+  @UseGuards(JwtAuthGuard)
+  async isFollowing(@Param('id') id: string, @CurrentUser() user: any) {
+    return this.usersService.isFollowing(user.id, id);
+  }
+
+  @Post(':id/block')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async block(@Param('id') id: string, @CurrentUser() user: any) {
+    await this.usersService.block(user.id, id);
+    return { message: 'User blocked successfully' };
+  }
+
+  @Post(':id/unblock')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async unblock(@Param('id') id: string, @CurrentUser() user: any) {
+    await this.usersService.unblock(user.id, id);
+    return { message: 'User unblocked successfully' };
   }
 
   @Get(':username/posts')

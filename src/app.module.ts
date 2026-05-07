@@ -12,6 +12,9 @@ import { RolesGuard } from './modules/auth/guards/roles.guard';
 import { TagsModule } from './modules/tags/tags.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { PostsModule } from './modules/posts/posts.module';
+import { CommentsModule } from './modules/comments/comments.module';
+import { LikesModule } from './modules/likes/likes.module';
+import { BookmarksModule } from './modules/bookmarks/bookmarks.module';
 
 @Module({
   imports: [
@@ -38,6 +41,9 @@ import { PostsModule } from './modules/posts/posts.module';
     TagsModule,
     CategoriesModule,
     PostsModule,
+    CommentsModule,
+    LikesModule,
+    BookmarksModule,
   ],
   controllers: [AppController],
   providers: [
@@ -52,4 +58,4 @@ import { PostsModule } from './modules/posts/posts.module';
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }

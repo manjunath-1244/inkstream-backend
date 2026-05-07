@@ -8,7 +8,7 @@ export class CreatePostDto {
 
   @IsString()
   @IsNotEmpty()
-  content!: string;
+  contentMarkdown!: string;
 
   @IsOptional()
   @IsString()
@@ -33,5 +33,5 @@ export class CreatePostDto {
 
   @IsOptional()
   @IsString()
-  featuredImage?: string;
+  coverImageUrl?: string;
 }
