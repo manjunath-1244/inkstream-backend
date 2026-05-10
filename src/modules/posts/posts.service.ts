@@ -8,6 +8,7 @@ import { UpdatePostDto } from './dto/update-post.dto';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { Tag } from '../tags/entities/tag.entity';
 import { Role } from '../users/entities/user.entity';
+import { Share } from './entities/share.entity';
 
 @Injectable()
 export class PostsService {
@@ -18,6 +19,8 @@ export class PostsService {
     private readonly tagRepository: Repository<Tag>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(Share)
+    private readonly shareRepository: Repository<Share>,
   ) {}
 
   async create(createPostDto: CreatePostDto, authorId: string): Promise<Post> {
@@ -111,6 +114,36 @@ export class PostsService {
 
   async incrementViewCount(id: string): Promise<void> {
     await this.postRepository.increment({ id }, 'viewCount', 1);
+  }
+
+  async incrementShareCount(id: string, channel: string, userId?: string): Promise<void> {
+    const post = await this.findOne(id);
+    
+    // 1. Record the share event
+    const share = this.shareRepository.create({
+      postId: post.id,
+      userId,
+      channel,
+    });
+    await this.shareRepository.save(share);
+
+    // 2. Increment the aggregate counter
+    await this.postRepository.increment({ id: post.id }, 'shareCount', 1);
+  }
+
+  async getShareStats(postId: string) {
+    const stats = await this.shareRepository
+      .createQueryBuilder('share')
+      .select('share.channel', 'channel')
+      .addSelect('COUNT(*)', 'count')
+      .where('share.postId = :postId', { postId })
+      .groupBy('share.channel')
+      .getRawMany();
+
+    return stats.map(s => ({
+      channel: s.channel,
+      count: parseInt(s.count, 10),
+    }));
   }
 
   async findMyDrafts(authorId: string, paginationDto: PaginationDto) {

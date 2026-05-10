@@ -15,6 +15,9 @@ import { PostsModule } from './modules/posts/posts.module';
 import { CommentsModule } from './modules/comments/comments.module';
 import { LikesModule } from './modules/likes/likes.module';
 import { BookmarksModule } from './modules/bookmarks/bookmarks.module';
+import { SearchModule } from './modules/search/search.module';
+import { AuditModule } from './modules/audit/audit.module';
+import { AdminModule } from './modules/admin/admin.module';
 
 @Module({
   imports: [
@@ -44,6 +47,9 @@ import { BookmarksModule } from './modules/bookmarks/bookmarks.module';
     CommentsModule,
     LikesModule,
     BookmarksModule,
+    SearchModule,
+    AuditModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [

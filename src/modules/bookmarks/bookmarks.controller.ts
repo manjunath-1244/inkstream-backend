@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Param, Query, UseGuards, ParseUUIDPipe } from '@nestjs/common';
 import { BookmarksService } from './bookmarks.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -10,7 +10,7 @@ export class BookmarksController {
   constructor(private readonly bookmarksService: BookmarksService) {}
 
   @Post(':postId')
-  toggle(@Param('postId') postId: string, @CurrentUser() user: any) {
+  toggle(@Param('postId', ParseUUIDPipe) postId: string, @CurrentUser() user: any) {
     return this.bookmarksService.toggleBookmark(user.id, postId);
   }
 

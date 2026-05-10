@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Body, Param, NotFoundException, Post, Delete, HttpCode, HttpStatus, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Patch, Body, Param, NotFoundException, Post, Delete, HttpCode, HttpStatus, Query, UseGuards, ParseUUIDPipe } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -43,7 +43,7 @@ export class UsersController {
   @Roles(Role.ADMIN)
   @UseGuards(JwtAuthGuard, RolesGuard)
   async updateRole(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body('role') role: Role,
   ) {
     return this.usersService.updateRole(id, role);
@@ -61,7 +61,7 @@ export class UsersController {
   @Post(':id/follow')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
-  async follow(@Param('id') id: string, @CurrentUser() user: any) {
+  async follow(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: any) {
     await this.usersService.follow(user.id, id);
     return { message: 'Followed successfully' };
   }
@@ -69,21 +69,21 @@ export class UsersController {
   @Delete(':id/follow')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
-  async unfollow(@Param('id') id: string, @CurrentUser() user: any) {
+  async unfollow(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: any) {
     await this.usersService.unfollow(user.id, id);
     return { message: 'Unfollowed successfully' };
   }
 
   @Get(':id/is-following')
   @UseGuards(JwtAuthGuard)
-  async isFollowing(@Param('id') id: string, @CurrentUser() user: any) {
+  async isFollowing(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: any) {
     return this.usersService.isFollowing(user.id, id);
   }
 
   @Post(':id/block')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
-  async block(@Param('id') id: string, @CurrentUser() user: any) {
+  async block(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: any) {
     await this.usersService.block(user.id, id);
     return { message: 'User blocked successfully' };
   }
@@ -91,7 +91,7 @@ export class UsersController {
   @Post(':id/unblock')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
-  async unblock(@Param('id') id: string, @CurrentUser() user: any) {
+  async unblock(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: any) {
     await this.usersService.unblock(user.id, id);
     return { message: 'User unblocked successfully' };
   }

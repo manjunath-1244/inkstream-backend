@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Query,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { CommentsService } from './comments.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
@@ -24,7 +25,7 @@ export class CommentsController {
 
   @Post('posts/:postId/comments')
   create(
-    @Param('postId') postId: string,
+    @Param('postId', ParseUUIDPipe) postId: string,
     @Body() dto: CreateCommentDto,
     @CurrentUser() user: any,
   ) {
@@ -34,7 +35,7 @@ export class CommentsController {
   @Public()
   @Get('posts/:postId/comments')
   findAll(
-    @Param('postId') postId: string,
+    @Param('postId', ParseUUIDPipe) postId: string,
     @Query() paginationDto: PaginationDto,
   ) {
     return this.commentsService.findByPost(postId, paginationDto);
@@ -42,7 +43,7 @@ export class CommentsController {
 
   @Patch('comments/:id')
   update(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateCommentDto,
     @CurrentUser() user: any,
   ) {
@@ -50,7 +51,7 @@ export class CommentsController {
   }
 
   @Delete('comments/:id')
-  remove(@Param('id') id: string, @CurrentUser() user: any) {
+  remove(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: any) {
     return this.commentsService.remove(id, user);
   }
 }

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, UseGuards, ParseUUIDPipe } from '@nestjs/common';
 import { TagsService } from './tags.service';
 import { Public } from '../auth/decorators/public.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -25,7 +25,7 @@ export class TagsController {
   @Delete(':id')
   @Roles(Role.ADMIN)
   @UseGuards(JwtAuthGuard, RolesGuard)
-  remove(@Param('id') id: string) {
+  remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.tagsService.remove(id);
   }
 }

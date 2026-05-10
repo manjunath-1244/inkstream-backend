@@ -8,6 +8,10 @@ import {
   Delete,
   UseGuards,
   Query,
+  HttpCode,
+  HttpStatus,
+  ParseUUIDPipe,
+  ForbiddenException,
 } from '@nestjs/common';
 import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
@@ -19,6 +23,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../users/entities/user.entity';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
+import { SharePostDto } from './dto/share-post.dto';
 
 @Controller('posts')
 export class PostsController {
@@ -43,11 +48,7 @@ export class PostsController {
     return this.postsService.getTrending(paginationDto);
   }
 
-  @Public()
-  @Get('search')
-  search(@Query('q') q: string, @Query() paginationDto: PaginationDto) {
-    return this.postsService.searchPosts(q, paginationDto);
-  }
+
 
   @Get('me/drafts')
   @Roles(Role.CREATOR, Role.ADMIN)
@@ -75,7 +76,7 @@ export class PostsController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
   update(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updatePostDto: UpdatePostDto,
     @CurrentUser() user: any,
   ) {
@@ -84,7 +85,36 @@ export class PostsController {
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
-  remove(@Param('id') id: string, @CurrentUser() user: any) {
+  remove(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: any) {
     return this.postsService.remove(id, user);
+  }
+
+  @Public()
+  @Post(':id/share')
+  @HttpCode(HttpStatus.OK)
+  async share(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: SharePostDto,
+    @CurrentUser() user: any,
+  ) {
+    await this.postsService.incrementShareCount(id, dto.channel, user?.id);
+    return { 
+      message: 'Shared successfully',
+      shareUrl: `https://inkstream.local/p/${id}` // placeholder as per brief 4.8
+    };
+  }
+
+  @Get(':id/share-stats')
+  @UseGuards(JwtAuthGuard)
+  async getShareStats(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: any,
+  ) {
+    const post = await this.postsService.findOne(id);
+    // Author or admin only
+    if (user.role !== Role.ADMIN && post.authorId !== user.id) {
+      throw new ForbiddenException('You do not have permission to view stats for this post');
+    }
+    return this.postsService.getShareStats(id);
   }
 }

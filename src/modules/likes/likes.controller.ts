@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Param, Query, UseGuards, ParseUUIDPipe } from '@nestjs/common';
 import { LikesService } from './likes.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -12,7 +12,7 @@ export class LikesController {
 
   @Post('posts/:id/like')
   togglePostLike(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser() user: any,
   ) {
     return this.likesService.togglePostLike(user.id, id);
@@ -20,7 +20,7 @@ export class LikesController {
 
   @Post('comments/:id/like')
   toggleCommentLike(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser() user: any,
   ) {
     return this.likesService.toggleCommentLike(user.id, id);
@@ -29,9 +29,20 @@ export class LikesController {
   @Public()
   @Get('posts/:id/likes')
   getPostLikes(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Query() paginationDto: PaginationDto,
   ) {
     return this.likesService.getPostLikes(id, paginationDto);
   }
+
+  // if we want comment likes count we can add here
+
+  // @Public()
+  // @Get('comments/:id/likes')
+  // getCommentLikes(
+  //   @Param('id') id: string,
+  //   @Query() paginationDto: PaginationDto,
+  // ) {
+  //   return this.likesService.getCommentLikes(id, paginationDto);
+  // }
 }

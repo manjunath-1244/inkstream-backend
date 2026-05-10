@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, ParseUUIDPipe } from '@nestjs/common';
 import { CategoriesService } from './categories.service';
 import { Public } from '../auth/decorators/public.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -18,7 +18,7 @@ export class CategoriesController {
 
   @Public()
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.categoriesService.findOne(id);
   }
 
@@ -32,14 +32,14 @@ export class CategoriesController {
   @Patch(':id')
   @Roles(Role.ADMIN)
   @UseGuards(JwtAuthGuard, RolesGuard)
-  update(@Param('id') id: string, @Body() data: { name?: string; slug?: string; description?: string }) {
+  update(@Param('id', ParseUUIDPipe) id: string, @Body() data: { name?: string; slug?: string; description?: string }) {
     return this.categoriesService.update(id, data);
   }
 
   @Delete(':id')
   @Roles(Role.ADMIN)
   @UseGuards(JwtAuthGuard, RolesGuard)
-  remove(@Param('id') id: string) {
+  remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.categoriesService.remove(id);
   }
 }

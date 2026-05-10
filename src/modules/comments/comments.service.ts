@@ -6,12 +6,15 @@ import { Comment } from './entities/comment.entity';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { Role } from '../users/entities/user.entity';
+import { Post } from '../posts/entities/post.entity';
 
 @Injectable()
 export class CommentsService {
   constructor(
     @InjectRepository(Comment)
     private readonly commentRepo: Repository<Comment>,
+    @InjectRepository(Post)
+    private readonly postRepo: Repository<Post>,
   ) {}
 
   async create(postId: string, authorId: string, dto: CreateCommentDto) {
@@ -35,7 +38,9 @@ export class CommentsService {
       parentCommentId,
     });
 
-    return this.commentRepo.save(comment);
+    const savedComment = await this.commentRepo.save(comment);
+    await this.postRepo.increment({ id: postId }, 'commentCount', 1);
+    return savedComment;
   }
 
   async findByPost(postId: string, paginationDto: PaginationDto) {
@@ -100,6 +105,7 @@ export class CommentsService {
       throw new ForbiddenException('You do not have permission to delete this comment');
     }
 
-    return this.commentRepo.softDelete(id);
+    await this.commentRepo.softDelete(id);
+    await this.postRepo.decrement({ id: comment.postId }, 'commentCount', 1);
   }
 }
