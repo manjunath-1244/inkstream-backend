@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, ILike, MoreThanOrEqual } from 'typeorm';
+import { Repository, In, ILike, MoreThanOrEqual, Brackets } from 'typeorm';
 import { Post, PostStatus } from './entities/post.entity';
 import { User } from '../users/entities/user.entity';
 import { CreatePostDto } from './dto/create-post.dto';
@@ -9,6 +9,8 @@ import { PaginationDto } from '../../common/dto/pagination.dto';
 import { Tag } from '../tags/entities/tag.entity';
 import { Role } from '../users/entities/user.entity';
 import { Share } from './entities/share.entity';
+import { Comment } from '../comments/entities/comment.entity';
+import { PostLike } from '../likes/entities/post-like.entity';
 
 @Injectable()
 export class PostsService {
@@ -21,6 +23,10 @@ export class PostsService {
     private readonly userRepository: Repository<User>,
     @InjectRepository(Share)
     private readonly shareRepository: Repository<Share>,
+    @InjectRepository(Comment)
+    private readonly commentRepository: Repository<Comment>,
+    @InjectRepository(PostLike)
+    private readonly postLikeRepository: Repository<PostLike>,
   ) {}
 
   async create(createPostDto: CreatePostDto, authorId: string): Promise<Post> {
@@ -251,19 +257,70 @@ export class PostsService {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
+    // Using raw SQL subqueries for PostgreSQL compatibility and efficiency
     const queryBuilder = this.postRepository.createQueryBuilder('post')
       .leftJoinAndSelect('post.author', 'author')
       .leftJoinAndSelect('post.category', 'category')
       .leftJoinAndSelect('post.tags', 'tags')
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('COUNT(pl.id)', 'recentLikes')
+          .from(PostLike, 'pl')
+          .where('pl.postId = post.id')
+          .andWhere('pl.createdAt >= :sevenDaysAgo', { sevenDaysAgo });
+      }, 'recentLikes')
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('COUNT(c.id)', 'recentComments')
+          .from(Comment, 'c')
+          .where('c.postId = post.id')
+          .andWhere('c.createdAt >= :sevenDaysAgo', { sevenDaysAgo })
+          .andWhere('c.deletedAt IS NULL');
+      }, 'recentComments')
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('COUNT(s.id)', 'recentShares')
+          .from(Share, 's')
+          .where('s.postId = post.id')
+          .andWhere('s.createdAt >= :sevenDaysAgo', { sevenDaysAgo });
+      }, 'recentShares')
       .where('post.status = :status', { status: PostStatus.PUBLISHED })
-      .andWhere('post.createdAt >= :date', { date: sevenDaysAgo })
-      .addSelect('(post.likeCount * 3 + post.commentCount * 2 + post.shareCount * 4)', 'score')
-      .orderBy('score', 'DESC')
+      .orderBy('( (SELECT COUNT(*) FROM post_likes WHERE "postId" = post.id AND "createdAt" >= :sevenDaysAgo) * 3 + (SELECT COUNT(*) FROM comments WHERE "postId" = post.id AND "createdAt" >= :sevenDaysAgo AND "deletedAt" IS NULL) * 2 + (SELECT COUNT(*) FROM shares WHERE "postId" = post.id AND "createdAt" >= :sevenDaysAgo) * 4 )', 'DESC')
       .addOrderBy('post.createdAt', 'DESC')
+      .setParameters({ sevenDaysAgo, status: PostStatus.PUBLISHED })
       .take(limit)
       .skip(skip);
 
+    // We use getManyAndCount but since we need the score for ordering, 
+    // the queryBuilder.orderBy already handles it in SQL.
     const [items, total] = await queryBuilder.getManyAndCount();
+
+    return {
+      items,
+      meta: {
+        totalItems: total,
+        itemCount: items.length,
+        itemsPerPage: limit,
+        totalPages: Math.ceil(total / limit),
+        currentPage: page,
+      },
+    };
+  }
+
+  async findByTag(tagId: string, paginationDto: PaginationDto) {
+    const { page = 1, limit = 10 } = paginationDto;
+    const skip = (page - 1) * limit;
+
+    const [items, total] = await this.postRepository.findAndCount({
+      where: {
+        tags: { id: tagId },
+        status: PostStatus.PUBLISHED,
+      },
+      relations: ['author', 'category', 'tags'],
+      order: { createdAt: 'DESC' },
+      take: limit,
+      skip,
+    });
 
     return {
       items,
@@ -281,16 +338,21 @@ export class PostsService {
     const { page = 1, limit = 10 } = paginationDto;
     const skip = (page - 1) * limit;
 
-    const [items, total] = await this.postRepository.findAndCount({
-      where: [
-        { title: ILike(`%${q}%`), status: PostStatus.PUBLISHED },
-        { contentMarkdown: ILike(`%${q}%`), status: PostStatus.PUBLISHED },
-      ],
-      relations: ['author', 'category', 'tags'],
-      order: { createdAt: 'DESC' },
-      take: limit,
-      skip,
-    });
+    const queryBuilder = this.postRepository.createQueryBuilder('post')
+      .leftJoinAndSelect('post.author', 'author')
+      .leftJoinAndSelect('post.category', 'category')
+      .leftJoinAndSelect('post.tags', 'tags')
+      .where('post.status = :status', { status: PostStatus.PUBLISHED })
+      .andWhere(new Brackets(qb => {
+        qb.where('post.title ILIKE :q', { q: `%${q}%` })
+          .orWhere('post.contentMarkdown ILIKE :q', { q: `%${q}%` })
+          .orWhere('tags.name ILIKE :q', { q: `%${q}%` });
+      }))
+      .orderBy('post.createdAt', 'DESC')
+      .take(limit)
+      .skip(skip);
+
+    const [items, total] = await queryBuilder.getManyAndCount();
 
     return {
       items,

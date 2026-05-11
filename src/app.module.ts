@@ -18,6 +18,7 @@ import { BookmarksModule } from './modules/bookmarks/bookmarks.module';
 import { SearchModule } from './modules/search/search.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { AdminModule } from './modules/admin/admin.module';
     SearchModule,
     AuditModule,
     AdminModule,
+    SubscriptionsModule,
   ],
   controllers: [AppController],
   providers: [

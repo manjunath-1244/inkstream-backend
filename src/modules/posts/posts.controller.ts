@@ -14,6 +14,8 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { PostsService } from './posts.service';
+import { SubscriptionsService } from '../subscriptions/subscriptions.service';
+import { PostVisibility } from './entities/post.entity';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { PaginationDto } from '../../common/dto/pagination.dto';
@@ -27,7 +29,10 @@ import { SharePostDto } from './dto/share-post.dto';
 
 @Controller('posts')
 export class PostsController {
-  constructor(private readonly postsService: PostsService) {}
+  constructor(
+    private readonly postsService: PostsService,
+    private readonly subscriptionsService: SubscriptionsService,
+  ) {}
 
   @Post()
   @Roles(Role.CREATOR, Role.ADMIN)
@@ -62,13 +67,19 @@ export class PostsController {
   async findOne(@Param('idOrSlug') idOrSlug: string, @CurrentUser() user: any) {
     const post = await this.postsService.findOne(idOrSlug);
     
-    // Increment view count (Simplified for this phase)
+    // Increment view count
     await this.postsService.incrementViewCount(post.id);
 
-    // Placeholder for Phase 4: Subscription Check
-    // if (post.visibility === PostVisibility.PREMIUM && (!user || !user.isSubscribed)) {
-    //   throw new ForbiddenException('This is premium content');
-    // }
+    // Subscription Check for Premium Content
+    if (post.visibility === PostVisibility.PREMIUM) {
+      if (!user) {
+        throw new ForbiddenException('This is premium content. Please log in.');
+      }
+      const subscription = await this.subscriptionsService.findActiveSubscription(user.id);
+      if (!subscription) {
+        throw new ForbiddenException('This content requires an active subscription');
+      }
+    }
 
     return post;
   }

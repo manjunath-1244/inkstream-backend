@@ -1,4 +1,5 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, ManyToMany } from 'typeorm';
+import { Post } from '../../posts/entities/post.entity';
 
 @Entity('tags')
 export class Tag {
@@ -10,6 +11,9 @@ export class Tag {
 
   @Column({ unique: true })
   slug!: string;
+
+  @ManyToMany(() => Post, (post) => post.tags)
+  posts!: Post[];
 
   @CreateDateColumn()
   createdAt!: Date;

@@ -1,6 +1,6 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { PostsService } from '../posts/posts.service';
-import { PaginationDto } from '../../common/dto/pagination.dto';
+import { SearchPostsDto } from './dto/search-posts.dto';
 import { Public } from '../auth/decorators/public.decorator';
 
 @Controller('search')
@@ -9,7 +9,8 @@ export class SearchController {
 
   @Public()
   @Get('posts')
-  searchPosts(@Query('q') q: string, @Query() paginationDto: PaginationDto) {
+  searchPosts(@Query() searchDto: SearchPostsDto) {
+    const { q, ...paginationDto } = searchDto;
     return this.postsService.searchPosts(q, paginationDto);
   }
 }

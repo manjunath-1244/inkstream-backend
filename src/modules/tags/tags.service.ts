@@ -1,17 +1,29 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Tag } from './entities/tag.entity';
+import { PostsService } from '../posts/posts.service';
+import { PaginationDto } from '../../common/dto/pagination.dto';
 
 @Injectable()
 export class TagsService {
   constructor(
     @InjectRepository(Tag)
     private readonly tagRepository: Repository<Tag>,
+    @Inject(forwardRef(() => PostsService))
+    private readonly postsService: PostsService,
   ) {}
 
-  async findAll(): Promise<Tag[]> {
-    return this.tagRepository.find({ order: { name: 'ASC' } });
+  async findAll() {
+    return this.tagRepository.createQueryBuilder('tag')
+      .loadRelationCountAndMap('tag.postCount', 'tag.posts')
+      .orderBy('tag.name', 'ASC')
+      .getMany();
+  }
+
+  async findPostsByTag(slug: string, paginationDto: PaginationDto) {
+    const tag = await this.findBySlug(slug);
+    return this.postsService.findByTag(tag.id, paginationDto);
   }
 
   async findOne(id: string): Promise<Tag> {
