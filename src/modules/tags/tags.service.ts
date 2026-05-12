@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Tag } from './entities/tag.entity';
 import { PostsService } from '../posts/posts.service';
 import { PaginationDto } from '../../common/dto/pagination.dto';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class TagsService {
@@ -12,6 +13,7 @@ export class TagsService {
     private readonly tagRepository: Repository<Tag>,
     @Inject(forwardRef(() => PostsService))
     private readonly postsService: PostsService,
+    private readonly usersService: UsersService,
   ) {}
 
   async findAll() {
@@ -21,9 +23,9 @@ export class TagsService {
       .getMany();
   }
 
-  async findPostsByTag(slug: string, paginationDto: PaginationDto) {
+  async findPostsByTag(slug: string, paginationDto: PaginationDto, userId?: string) {
     const tag = await this.findBySlug(slug);
-    return this.postsService.findByTag(tag.id, paginationDto);
+    return this.postsService.findByTag(tag.id, paginationDto, userId);
   }
 
   async findOne(id: string): Promise<Tag> {

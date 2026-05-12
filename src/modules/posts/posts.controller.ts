@@ -43,14 +43,14 @@ export class PostsController {
 
   @Public()
   @Get()
-  findAll(@Query() paginationDto: PaginationDto) {
-    return this.postsService.findAll(paginationDto);
+  findAll(@Query() paginationDto: PaginationDto, @CurrentUser() user?: any) {
+    return this.postsService.findAll(paginationDto, user?.id);
   }
 
   @Public()
   @Get('trending')
-  getTrending(@Query() paginationDto: PaginationDto) {
-    return this.postsService.getTrending(paginationDto);
+  getTrending(@Query() paginationDto: PaginationDto, @CurrentUser() user?: any) {
+    return this.postsService.getTrending(paginationDto, user?.id);
   }
 
 

@@ -7,9 +7,12 @@ import { Post } from '../posts/entities/post.entity';
 import { Comment } from '../comments/entities/comment.entity';
 import { AuditModule } from '../audit/audit.module';
 
+import { Subscription } from '../subscriptions/entities/subscription.entity';
+import { Plan } from '../subscriptions/entities/plan.entity';
+
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, Post, Comment]),
+    TypeOrmModule.forFeature([User, Post, Comment, Subscription, Plan]),
     AuditModule,
   ],
   controllers: [AdminController],

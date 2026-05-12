@@ -1,12 +1,14 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull } from 'typeorm';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { Comment } from './entities/comment.entity';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { Role } from '../users/entities/user.entity';
 import { Post } from '../posts/entities/post.entity';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class CommentsService {
@@ -15,14 +17,27 @@ export class CommentsService {
     private readonly commentRepo: Repository<Comment>,
     @InjectRepository(Post)
     private readonly postRepo: Repository<Post>,
+    private readonly eventEmitter: EventEmitter2,
+    private readonly usersService: UsersService,
   ) {}
 
   async create(postId: string, authorId: string, dto: CreateCommentDto) {
+    const post = await this.postRepo.findOne({ where: { id: postId } });
+    if (!post) throw new NotFoundException('Post not found');
+
+    if (await this.usersService.isBlocked(authorId, post.authorId)) {
+      throw new ForbiddenException('You cannot interact with this user');
+    }
+
     let parentCommentId = dto.parentCommentId;
 
     if (parentCommentId) {
       const parent = await this.commentRepo.findOne({ where: { id: parentCommentId } });
       if (!parent) throw new NotFoundException('Parent comment not found');
+
+      if (await this.usersService.isBlocked(authorId, parent.authorId)) {
+        throw new ForbiddenException('You cannot interact with this user');
+      }
 
       // Rule: Reply to a reply becomes a sibling reply on the same parent
       // This enforces a 1-level nesting depth
@@ -40,6 +55,26 @@ export class CommentsService {
 
     const savedComment = await this.commentRepo.save(comment);
     await this.postRepo.increment({ id: postId }, 'commentCount', 1);
+
+    if (parentCommentId) {
+      const parent = await this.commentRepo.findOne({ where: { id: parentCommentId } });
+      if (parent) {
+        this.eventEmitter.emit('comment.replied', {
+          replierId: authorId,
+          parentCommentAuthorId: parent.authorId,
+          postId: postId,
+          commentId: savedComment.id,
+        });
+      }
+    } else if (post) {
+      this.eventEmitter.emit('comment.created', {
+        commenterId: authorId,
+        postAuthorId: post.authorId,
+        postId: postId,
+        commentId: savedComment.id,
+      });
+    }
+
     return savedComment;
   }
 

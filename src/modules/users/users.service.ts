@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { User, Role } from './entities/user.entity';
 
 @Injectable()
@@ -8,6 +9,7 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async findByEmail(email: string): Promise<User | null> {
@@ -66,6 +68,11 @@ export class UsersService {
     if (!user.following.some(u => u.id === targetId)) {
       user.following.push(target);
       await this.userRepository.save(user);
+
+      this.eventEmitter.emit('user.followed', {
+        followerId: userId,
+        followingId: targetId,
+      });
     }
   }
 
@@ -119,6 +126,44 @@ export class UsersService {
 
     user.blockedUsers = user.blockedUsers.filter(u => u.id !== targetId);
     await this.userRepository.save(user);
+  }
+
+  async isBlocked(userIdA: string, userIdB: string): Promise<boolean> {
+    const userA = await this.userRepository.findOne({
+      where: { id: userIdA },
+      relations: ['blockedUsers'],
+    });
+    const userB = await this.userRepository.findOne({
+      where: { id: userIdB },
+      relations: ['blockedUsers'],
+    });
+
+    if (!userA || !userB) return false;
+
+    const aBlocksB = userA.blockedUsers.some(u => u.id === userIdB);
+    const bBlocksA = userB.blockedUsers.some(u => u.id === userIdA);
+
+    return aBlocksB || bBlocksA;
+  }
+
+  async getBlockedUserIds(userId: string): Promise<string[]> {
+    // Users blocked by the current user
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: ['blockedUsers'],
+    });
+    
+    // Users who have blocked the current user
+    const blockers = await this.userRepository.createQueryBuilder('user')
+      .innerJoin('user.blockedUsers', 'blocked')
+      .where('blocked.id = :userId', { userId })
+      .getMany();
+
+    const blockedIds = new Set<string>();
+    user?.blockedUsers.forEach(u => blockedIds.add(u.id));
+    blockers.forEach(u => blockedIds.add(u.id));
+
+    return Array.from(blockedIds);
   }
 
   async isFollowing(userId: string, targetId: string) {

@@ -5,6 +5,8 @@ import { User, UserStatus } from '../users/entities/user.entity';
 import { Post } from '../posts/entities/post.entity';
 import { Comment } from '../comments/entities/comment.entity';
 import { AuditService } from '../audit/audit.service';
+import { Subscription, SubscriptionStatus } from '../subscriptions/entities/subscription.entity';
+import { Plan } from '../subscriptions/entities/plan.entity';
 
 @Injectable()
 export class AdminService {
@@ -15,6 +17,8 @@ export class AdminService {
     private readonly postRepo: Repository<Post>,
     @InjectRepository(Comment)
     private readonly commentRepo: Repository<Comment>,
+    @InjectRepository(Subscription)
+    private readonly subscriptionRepo: Repository<Subscription>,
     private readonly auditService: AuditService,
   ) {}
 
@@ -25,9 +29,14 @@ export class AdminService {
       this.commentRepo.count(),
     ]);
 
-    // MRR placeholder for now until subscriptions are implemented
-    const activeSubscriptions = 0;
-    const mrr = 0;
+    // MRR Calculation
+    const activeSubs = await this.subscriptionRepo.find({
+      where: { status: SubscriptionStatus.ACTIVE },
+      relations: ['plan'],
+    });
+
+    const activeSubscriptions = activeSubs.length;
+    const mrr = activeSubs.reduce((acc, sub) => acc + sub.plan.price, 0);
 
     return {
       totals: {
@@ -56,5 +65,44 @@ export class AdminService {
     );
 
     return { message: `User ${user.email} has been permanently banned` };
+  }
+
+  async suspendUser(id: string, adminId: string, durationHours: number) {
+    const user = await this.userRepo.findOne({ where: { id } });
+    if (!user) throw new NotFoundException('User not found');
+
+    const suspendedUntil = new Date();
+    suspendedUntil.setHours(suspendedUntil.getHours() + durationHours);
+
+    user.status = UserStatus.SUSPENDED;
+    user.suspendedUntil = suspendedUntil;
+    await this.userRepo.save(user);
+
+    await this.auditService.record(
+      adminId,
+      'SUSPEND_USER',
+      'USER',
+      id,
+      { previousStatus: user.status, durationHours, suspendedUntil },
+    );
+
+    return { message: `User ${user.email} suspended for ${durationHours} hours` };
+  }
+
+  async hidePost(id: string, adminId: string) {
+    const post = await this.postRepo.findOne({ where: { id } });
+    if (!post) throw new NotFoundException('Post not found');
+
+    post.isHidden = !post.isHidden;
+    await this.postRepo.save(post);
+
+    await this.auditService.record(
+      adminId,
+      post.isHidden ? 'HIDE_POST' : 'UNHIDE_POST',
+      'POST',
+      id,
+    );
+
+    return { message: `Post ${post.isHidden ? 'hidden' : 'unhidden'} successfully`, isHidden: post.isHidden };
   }
 }

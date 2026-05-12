@@ -6,6 +6,7 @@ import { Role } from '../users/entities/user.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { PaginationDto } from '../../common/dto/pagination.dto';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
 @Controller('tags')
 export class TagsController {
@@ -19,8 +20,8 @@ export class TagsController {
 
   @Public()
   @Get(':slug/posts')
-  findPostsByTag(@Param('slug') slug: string, @Query() paginationDto: PaginationDto) {
-    return this.tagsService.findPostsByTag(slug, paginationDto);
+  findPostsByTag(@Param('slug') slug: string, @Query() paginationDto: PaginationDto, @CurrentUser() user?: any) {
+    return this.tagsService.findPostsByTag(slug, paginationDto, user?.id);
   }
 
   @Post()

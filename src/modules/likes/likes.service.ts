@@ -1,11 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PostLike } from './entities/post-like.entity';
 import { CommentLike } from './entities/comment-like.entity';
 import { Post } from '../posts/entities/post.entity';
 import { Comment } from '../comments/entities/comment.entity';
 import { PaginationDto } from '../../common/dto/pagination.dto';
+import { UsersService } from '../users/users.service';
+import { ForbiddenException } from '@nestjs/common';
 
 @Injectable()
 export class LikesService {
@@ -15,12 +18,18 @@ export class LikesService {
     @InjectRepository(CommentLike)
     private readonly commentLikeRepo: Repository<CommentLike>,
     private readonly dataSource: DataSource,
+    private readonly eventEmitter: EventEmitter2,
+    private readonly usersService: UsersService,
   ) {}
 
   async togglePostLike(userId: string, postId: string) {
     return await this.dataSource.transaction(async (manager) => {
       const post = await manager.findOne(Post, { where: { id: postId } });
       if (!post) throw new NotFoundException('Post not found');
+
+      if (await this.usersService.isBlocked(userId, post.authorId)) {
+        throw new ForbiddenException('You cannot interact with this user');
+      }
 
       const existingLike = await manager.findOne(PostLike, {
         where: { userId, postId },
@@ -36,6 +45,13 @@ export class LikesService {
         await manager.save(newLike);
         post.likeCount += 1;
         await manager.save(post);
+        
+        this.eventEmitter.emit('post.liked', {
+          likerId: userId,
+          authorId: post.authorId,
+          postId: post.id,
+        });
+        
         return { liked: true, count: post.likeCount };
       }
     });
@@ -45,6 +61,10 @@ export class LikesService {
     return await this.dataSource.transaction(async (manager) => {
       const comment = await manager.findOne(Comment, { where: { id: commentId } });
       if (!comment) throw new NotFoundException('Comment not found');
+
+      if (await this.usersService.isBlocked(userId, comment.authorId)) {
+        throw new ForbiddenException('You cannot interact with this user');
+      }
 
       const existingLike = await manager.findOne(CommentLike, {
         where: { userId, commentId },

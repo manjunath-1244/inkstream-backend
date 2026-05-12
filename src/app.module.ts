@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { EventEmitterModule } from '@nestjs/event-emitter';
+
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
@@ -19,6 +21,8 @@ import { SearchModule } from './modules/search/search.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
+import { ReportsModule } from './modules/reports/reports.module';
 
 @Module({
   imports: [
@@ -52,6 +56,9 @@ import { SubscriptionsModule } from './modules/subscriptions/subscriptions.modul
     AuditModule,
     AdminModule,
     SubscriptionsModule,
+    NotificationsModule,
+    ReportsModule,
+    EventEmitterModule.forRoot(),
   ],
   controllers: [AppController],
   providers: [

@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, ILike, MoreThanOrEqual, Brackets } from 'typeorm';
+import { Repository, In, ILike, MoreThanOrEqual, Brackets, Not } from 'typeorm';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Post, PostStatus } from './entities/post.entity';
 import { User } from '../users/entities/user.entity';
 import { CreatePostDto } from './dto/create-post.dto';
@@ -27,7 +28,37 @@ export class PostsService {
     private readonly commentRepository: Repository<Comment>,
     @InjectRepository(PostLike)
     private readonly postLikeRepository: Repository<PostLike>,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
+
+  private getBaseWhereClause(baseConditions: any = {}) {
+    return {
+      ...baseConditions,
+      status: PostStatus.PUBLISHED,
+      isHidden: false,
+    };
+  }
+
+  // Helper method to add blocked users filter
+  private async getBlockedUsersCondition(userId?: string) {
+    if (!userId) return {};
+    
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: ['blockedUsers'],
+    });
+    
+    const blockers = await this.userRepository.createQueryBuilder('user')
+      .innerJoin('user.blockedUsers', 'blocked')
+      .where('blocked.id = :userId', { userId })
+      .getMany();
+
+    const blockedIds = new Set<string>();
+    user?.blockedUsers.forEach(u => blockedIds.add(u.id));
+    blockers.forEach(u => blockedIds.add(u.id));
+
+    return blockedIds.size > 0 ? { authorId: Not(In(Array.from(blockedIds))) } : {};
+  }
 
   async create(createPostDto: CreatePostDto, authorId: string): Promise<Post> {
     const { tagIds, ...postData } = createPostDto;
@@ -43,15 +74,23 @@ export class PostsService {
       });
     }
 
-    return this.postRepository.save(post);
+    const savedPost = await this.postRepository.save(post);
+
+    if (savedPost.status === PostStatus.PUBLISHED) {
+      await this.notifyFollowers(savedPost);
+    }
+
+    return savedPost;
   }
 
-  async findAll(paginationDto: PaginationDto) {
+  async findAll(paginationDto: PaginationDto, userId?: string) {
     const { page = 1, limit = 10 } = paginationDto;
     const skip = (page - 1) * limit;
 
+    const blockFilter = await this.getBlockedUsersCondition(userId);
+
     const [items, total] = await this.postRepository.findAndCount({
-      where: { status: PostStatus.PUBLISHED },
+      where: { ...this.getBaseWhereClause(), ...blockFilter },
       relations: ['author', 'category', 'tags'],
       order: { createdAt: 'DESC' },
       take: limit,
@@ -75,8 +114,8 @@ export class PostsService {
     
     const post = await this.postRepository.findOne({
       where: isUuid 
-        ? [{ id: idOrSlug }, { slug: idOrSlug }] 
-        : { slug: idOrSlug },
+        ? [{ id: idOrSlug, isHidden: false }, { slug: idOrSlug, isHidden: false }] 
+        : { slug: idOrSlug, isHidden: false },
       relations: ['author', 'category', 'tags'],
     });
 
@@ -104,7 +143,29 @@ export class PostsService {
       });
     }
 
-    return this.postRepository.save(post);
+    const savedPost = await this.postRepository.save(post);
+
+    // If it just became published
+    if (updatePostDto.status === PostStatus.PUBLISHED && post.status !== PostStatus.PUBLISHED) {
+      await this.notifyFollowers(savedPost);
+    }
+
+    return savedPost;
+  }
+
+  private async notifyFollowers(post: Post) {
+    const author = await this.userRepository.findOne({
+      where: { id: post.authorId },
+      relations: ['followers'],
+    });
+
+    if (author && author.followers.length > 0) {
+      this.eventEmitter.emit('post.published', {
+        authorId: post.authorId,
+        postId: post.id,
+        followerIds: author.followers.map(f => f.id),
+      });
+    }
   }
 
   async remove(id: string, user: any): Promise<void> {
@@ -227,10 +288,12 @@ export class PostsService {
     const followedIds = user.following.map((u) => u.id);
 
     // 2. Fetch posts from those users
+    const blockFilter = await this.getBlockedUsersCondition(userId);
     const [items, total] = await this.postRepository.findAndCount({
       where: {
         authorId: In(followedIds),
-        status: PostStatus.PUBLISHED,
+        ...this.getBaseWhereClause(),
+        ...blockFilter,
       },
       relations: ['author', 'category', 'tags'],
       order: { createdAt: 'DESC' },
@@ -250,14 +313,13 @@ export class PostsService {
     };
   }
 
-  async getTrending(paginationDto: PaginationDto) {
+  async getTrending(paginationDto: PaginationDto, userId?: string) {
     const { page = 1, limit = 10 } = paginationDto;
     const skip = (page - 1) * limit;
 
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-    // Using raw SQL subqueries for PostgreSQL compatibility and efficiency
     const queryBuilder = this.postRepository.createQueryBuilder('post')
       .leftJoinAndSelect('post.author', 'author')
       .leftJoinAndSelect('post.category', 'category')
@@ -285,9 +347,31 @@ export class PostsService {
           .andWhere('s.createdAt >= :sevenDaysAgo', { sevenDaysAgo });
       }, 'recentShares')
       .where('post.status = :status', { status: PostStatus.PUBLISHED })
-      .orderBy('( (SELECT COUNT(*) FROM post_likes WHERE "postId" = post.id AND "createdAt" >= :sevenDaysAgo) * 3 + (SELECT COUNT(*) FROM comments WHERE "postId" = post.id AND "createdAt" >= :sevenDaysAgo AND "deletedAt" IS NULL) * 2 + (SELECT COUNT(*) FROM shares WHERE "postId" = post.id AND "createdAt" >= :sevenDaysAgo) * 4 )', 'DESC')
+      .andWhere('post.isHidden = :isHidden', { isHidden: false });
+
+    if (userId) {
+      const user = await this.userRepository.findOne({
+        where: { id: userId },
+        relations: ['blockedUsers'],
+      });
+      const blockers = await this.userRepository.createQueryBuilder('user')
+        .innerJoin('user.blockedUsers', 'blocked')
+        .where('blocked.id = :userId', { userId })
+        .getMany();
+
+      const blockedIds = new Set<string>();
+      user?.blockedUsers.forEach(u => blockedIds.add(u.id));
+      blockers.forEach(u => blockedIds.add(u.id));
+      const blockedIdsArray = Array.from(blockedIds);
+
+      if (blockedIdsArray.length > 0) {
+        queryBuilder.andWhere('post.authorId NOT IN (:...blockedIds)', { blockedIds: blockedIdsArray });
+      }
+    }
+
+    queryBuilder.orderBy('( (SELECT COUNT(*) FROM post_likes WHERE "postId" = post.id AND "createdAt" >= :sevenDaysAgo) * 3 + (SELECT COUNT(*) FROM comments WHERE "postId" = post.id AND "createdAt" >= :sevenDaysAgo AND "deletedAt" IS NULL) * 2 + (SELECT COUNT(*) FROM shares WHERE "postId" = post.id AND "createdAt" >= :sevenDaysAgo) * 4 )', 'DESC')
       .addOrderBy('post.createdAt', 'DESC')
-      .setParameters({ sevenDaysAgo, status: PostStatus.PUBLISHED })
+      .setParameters({ sevenDaysAgo, status: PostStatus.PUBLISHED, isHidden: false })
       .take(limit)
       .skip(skip);
 
@@ -307,14 +391,17 @@ export class PostsService {
     };
   }
 
-  async findByTag(tagId: string, paginationDto: PaginationDto) {
+  async findByTag(tagId: string, paginationDto: PaginationDto, userId?: string) {
     const { page = 1, limit = 10 } = paginationDto;
     const skip = (page - 1) * limit;
+
+    const blockFilter = await this.getBlockedUsersCondition(userId);
 
     const [items, total] = await this.postRepository.findAndCount({
       where: {
         tags: { id: tagId },
-        status: PostStatus.PUBLISHED,
+        ...this.getBaseWhereClause(),
+        ...blockFilter,
       },
       relations: ['author', 'category', 'tags'],
       order: { createdAt: 'DESC' },
@@ -334,7 +421,7 @@ export class PostsService {
     };
   }
 
-  async searchPosts(q: string, paginationDto: PaginationDto) {
+  async searchPosts(q: string, paginationDto: PaginationDto, userId?: string) {
     const { page = 1, limit = 10 } = paginationDto;
     const skip = (page - 1) * limit;
 
@@ -343,7 +430,29 @@ export class PostsService {
       .leftJoinAndSelect('post.category', 'category')
       .leftJoinAndSelect('post.tags', 'tags')
       .where('post.status = :status', { status: PostStatus.PUBLISHED })
-      .andWhere(new Brackets(qb => {
+      .andWhere('post.isHidden = :isHidden', { isHidden: false });
+
+    if (userId) {
+      const user = await this.userRepository.findOne({
+        where: { id: userId },
+        relations: ['blockedUsers'],
+      });
+      const blockers = await this.userRepository.createQueryBuilder('user')
+        .innerJoin('user.blockedUsers', 'blocked')
+        .where('blocked.id = :userId', { userId })
+        .getMany();
+
+      const blockedIds = new Set<string>();
+      user?.blockedUsers.forEach(u => blockedIds.add(u.id));
+      blockers.forEach(u => blockedIds.add(u.id));
+      const blockedIdsArray = Array.from(blockedIds);
+
+      if (blockedIdsArray.length > 0) {
+        queryBuilder.andWhere('post.authorId NOT IN (:...blockedIds)', { blockedIds: blockedIdsArray });
+      }
+    }
+
+    queryBuilder.andWhere(new Brackets(qb => {
         qb.where('post.title ILIKE :q', { q: `%${q}%` })
           .orWhere('post.contentMarkdown ILIKE :q', { q: `%${q}%` })
           .orWhere('tags.name ILIKE :q', { q: `%${q}%` });

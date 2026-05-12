@@ -46,6 +46,9 @@ export class User {
   })
   status!: UserStatus;
 
+  @Column({ type: 'timestamp', nullable: true })
+  suspendedUntil?: Date;
+
   // Profile fields
   @Column({ type: 'text', nullable: true })
   bio?: string;

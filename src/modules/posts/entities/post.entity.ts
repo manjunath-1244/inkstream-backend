@@ -56,6 +56,9 @@ export class Post {
   })
   visibility!: PostVisibility;
 
+  @Column({ default: false })
+  isHidden!: boolean;
+
   @Column({ default: 0 })
   readingTimeMinutes!: number;
 
