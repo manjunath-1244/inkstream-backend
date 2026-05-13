@@ -1,6 +1,7 @@
 // users/entities/user.entity.ts
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToMany, ManyToMany, JoinTable } from 'typeorm';
 import { Post } from '../../posts/entities/post.entity';
+import { ApiProperty, ApiHideProperty } from '@nestjs/swagger';
 
 export enum Role {
   USER = 'USER',
@@ -17,21 +18,27 @@ export enum UserStatus {
 
 @Entity('users')
 export class User {
+  @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
+  @ApiProperty({ example: 'user@example.com' })
   @Column({ unique: true })
   email!: string;
 
+  @ApiProperty({ example: 'johndoe', required: false })
   @Column({ unique: true, nullable: true })
   username?: string;
 
+  @ApiProperty({ example: 'John Doe', required: false })
   @Column({ nullable: true })
   displayName?: string;
 
+  @ApiHideProperty()
   @Column()
   passwordHash!: string;
 
+  @ApiProperty({ enum: Role, default: Role.USER })
   @Column({
     type: 'enum',
     enum: Role,
@@ -39,6 +46,7 @@ export class User {
   })
   role!: Role;
 
+  @ApiProperty({ enum: UserStatus, default: UserStatus.ACTIVE })
   @Column({
     type: 'enum',
     enum: UserStatus,
@@ -46,29 +54,35 @@ export class User {
   })
   status!: UserStatus;
 
+  @ApiProperty({ required: false })
   @Column({ type: 'timestamp', nullable: true })
   suspendedUntil?: Date;
 
-  // Profile fields
+  @ApiProperty({ example: 'I am a creator on InkStream', required: false })
   @Column({ type: 'text', nullable: true })
   bio?: string;
 
+  @ApiProperty({ example: 'https://example.com/avatar.jpg', required: false })
   @Column({ nullable: true })
   avatarUrl?: string;
 
+  @ApiProperty({ example: 'https://johndoe.com', required: false })
   @Column({ nullable: true })
   website?: string;
 
-  // Password Reset fields
+  @ApiHideProperty()
   @Column({ nullable: true })
   resetPasswordToken?: string;
 
+  @ApiHideProperty()
   @Column({ type: 'timestamp', nullable: true })
   resetPasswordExpires?: Date;
 
+  @ApiProperty()
   @CreateDateColumn()
   createdAt!: Date;
 
+  @ApiProperty()
   @UpdateDateColumn()
   updatedAt!: Date;
 

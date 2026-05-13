@@ -15,7 +15,7 @@ import {
 } from '@nestjs/common';
 import { PostsService } from './posts.service';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
-import { PostVisibility } from './entities/post.entity';
+import { PostVisibility, Post as PostEntity } from './entities/post.entity';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { PaginationDto } from '../../common/dto/pagination.dto';
@@ -26,7 +26,9 @@ import { Role } from '../users/entities/user.entity';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
 import { SharePostDto } from './dto/share-post.dto';
+import { ApiTags, ApiOperation, ApiOkResponse, ApiCreatedResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 
+@ApiTags('Posts')
 @Controller('posts')
 export class PostsController {
   constructor(
@@ -37,33 +39,44 @@ export class PostsController {
   @Post()
   @Roles(Role.CREATOR, Role.ADMIN)
   @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Create a new post' })
+  @ApiCreatedResponse({ type: PostEntity, description: 'Post created successfully' })
   create(@Body() createPostDto: CreatePostDto, @CurrentUser() user: any) {
     return this.postsService.create(createPostDto, user.id);
   }
 
   @Public()
   @Get()
+  @ApiOperation({ summary: 'Get all published posts' })
+  @ApiOkResponse({ description: 'Returns paginated list of posts' })
   findAll(@Query() paginationDto: PaginationDto, @CurrentUser() user?: any) {
     return this.postsService.findAll(paginationDto, user?.id);
   }
 
   @Public()
   @Get('trending')
+  @ApiOperation({ summary: 'Get trending posts' })
+  @ApiOkResponse({ description: 'Returns paginated list of trending posts based on likes and comments' })
   getTrending(@Query() paginationDto: PaginationDto, @CurrentUser() user?: any) {
     return this.postsService.getTrending(paginationDto, user?.id);
   }
 
-
-
   @Get('me/drafts')
   @Roles(Role.CREATOR, Role.ADMIN)
   @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get current user drafts' })
+  @ApiOkResponse({ description: 'Returns paginated list of user drafts' })
   findMyDrafts(@Query() paginationDto: PaginationDto, @CurrentUser() user: any) {
     return this.postsService.findMyDrafts(user.id, paginationDto);
   }
 
   @Public()
   @Get(':idOrSlug')
+  @ApiOperation({ summary: 'Get a single post by ID or Slug' })
+  @ApiParam({ name: 'idOrSlug', description: 'Post UUID or URL slug' })
+  @ApiOkResponse({ type: PostEntity, description: 'Returns the post data' })
   async findOne(@Param('idOrSlug') idOrSlug: string, @CurrentUser() user: any) {
     const post = await this.postsService.findOne(idOrSlug);
     
@@ -86,6 +99,10 @@ export class PostsController {
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update a post' })
+  @ApiParam({ name: 'id', description: 'Post UUID' })
+  @ApiOkResponse({ type: PostEntity, description: 'Post updated successfully' })
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updatePostDto: UpdatePostDto,
@@ -96,6 +113,10 @@ export class PostsController {
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Soft delete a post' })
+  @ApiParam({ name: 'id', description: 'Post UUID' })
+  @ApiOkResponse({ description: 'Post deleted successfully' })
   remove(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: any) {
     return this.postsService.remove(id, user);
   }
@@ -103,6 +124,9 @@ export class PostsController {
   @Public()
   @Post(':id/share')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Record a post share' })
+  @ApiParam({ name: 'id', description: 'Post UUID' })
+  @ApiOkResponse({ description: 'Share recorded successfully' })
   async share(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: SharePostDto,
@@ -111,12 +135,16 @@ export class PostsController {
     await this.postsService.incrementShareCount(id, dto.channel, user?.id);
     return { 
       message: 'Shared successfully',
-      shareUrl: `https://inkstream.local/p/${id}` // placeholder as per brief 4.8
+      shareUrl: `https://inkstream.local/p/${id}` 
     };
   }
 
   @Get(':id/share-stats')
   @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get share statistics for a post' })
+  @ApiParam({ name: 'id', description: 'Post UUID' })
+  @ApiOkResponse({ description: 'Returns share counts grouped by channel' })
   async getShareStats(
     @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser() user: any,

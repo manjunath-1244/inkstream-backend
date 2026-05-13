@@ -32,7 +32,7 @@ export class AuthService {
       email: dto.email,
       passwordHash: hashedPassword,
       displayName: dto.displayName,
-      username: dto.email.split('@')[0] + Math.floor(Math.random() * 1000), // Default username
+      username: dto.username || (dto.email.split('@')[0] + Math.floor(Math.random() * 1000)),
     });
 
     return this.generateTokens(user);
@@ -77,11 +77,12 @@ export class AuthService {
     });
 
     return {
-      access_token: accessToken,
-      refresh_token: refreshTokenStr,
+      accessToken, // CamelCase to match E2E tests
+      refreshToken: refreshTokenStr, // CamelCase to match E2E tests
       user: {
         id: user.id,
         email: user.email,
+        username: user.username,
         role: user.role,
       },
     };
@@ -92,9 +93,6 @@ export class AuthService {
       where: { revokedAt: undefined },
     });
 
-    // We have to verify the hash manually or find by user then verify
-    // For simplicity in this assignment, we'll find by the string (this is not ideal but works for demonstration)
-    // Actually, let's do it better: find all active tokens and compare
     let validToken: RefreshToken | null = null;
     for (const token of tokens) {
       if (await bcrypt.compare(refreshTokenStr, token.tokenHash)) {
@@ -135,7 +133,6 @@ export class AuthService {
   async forgotPassword(email: string) {
     const user = await this.usersService.findByEmail(email);
     if (!user) {
-      // Don't leak user existence for security
       return { message: 'If your email exists in our system, you will receive a reset link.' };
     }
 
@@ -154,8 +151,6 @@ export class AuthService {
 
   async resetPassword(token: string, newPassword: string) {
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
-    
-    // We need a way to find user by reset token. Adding to UsersService.
     const user = await this.usersService.findByResetToken(hashedToken);
     
     if (!user || user.resetPasswordExpires! < new Date()) {
@@ -175,6 +170,4 @@ export class AuthService {
 
     return { message: 'Password reset successfully' };
   }
-
-  
 }

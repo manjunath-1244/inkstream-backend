@@ -7,6 +7,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
+import { ApiProperty } from '@nestjs/swagger';
 
 export enum NotificationType {
   NEW_FOLLOWER = 'NEW_FOLLOWER',
@@ -18,9 +19,11 @@ export enum NotificationType {
 
 @Entity('notifications')
 export class Notification {
+  @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
+  @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174001' })
   @Column('uuid')
   recipientId!: string;
 
@@ -28,6 +31,7 @@ export class Notification {
   @JoinColumn({ name: 'recipientId' })
   recipient!: User;
 
+  @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174002' })
   @Column('uuid')
   actorId!: string;
 
@@ -35,19 +39,22 @@ export class Notification {
   @JoinColumn({ name: 'actorId' })
   actor!: User;
 
+  @ApiProperty({ enum: NotificationType, example: NotificationType.NEW_LIKE_ON_YOUR_POST })
   @Column({
     type: 'enum',
     enum: NotificationType,
   })
   type!: NotificationType;
 
-  // Optional target entity (e.g. Post ID or Comment ID)
+  @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174003', required: false })
   @Column({ type: 'uuid', nullable: true })
   targetId!: string | null;
 
+  @ApiProperty({ default: false })
   @Column({ default: false })
   isRead!: boolean;
 
+  @ApiProperty()
   @CreateDateColumn()
   createdAt!: Date;
 }

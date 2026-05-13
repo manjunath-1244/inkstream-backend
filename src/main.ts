@@ -3,6 +3,9 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { TypeOrmExceptionFilter } from './common/filters/typeorm-exception.filter';
+import { TrimStringsPipe } from './common/pipes/trim-strings.pipe';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -11,8 +14,26 @@ async function bootstrap() {
   const express = require('express');
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
-  // Enable global validation pipe
+
+  // Security features
+  app.enableCors();
+  app.use(helmet());
+
+  // Swagger Configuration
+  if (process.env.NODE_ENV !== 'production' || process.env.ENABLE_DOCS === 'true') {
+    const config = new DocumentBuilder()
+      .setTitle('InkStream API')
+      .setDescription('The InkStream Creator Platform API documentation')
+      .setVersion('1.0')
+      .addBearerAuth()
+      .build();
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api/docs', app, document);
+  }
+
+  // Enable global validation pipe and custom trim pipe
   app.useGlobalPipes(
+    new TrimStringsPipe(),
     new ValidationPipe({
       whitelist: true,   // Strip unknown properties
       forbidNonWhitelisted: true, // Reject requests with unknown properties

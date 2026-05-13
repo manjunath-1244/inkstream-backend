@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Plan } from './plan.entity';
+import { ApiProperty } from '@nestjs/swagger';
 
 export enum SubscriptionStatus {
   ACTIVE = 'ACTIVE',
@@ -19,9 +20,11 @@ export enum SubscriptionStatus {
 
 @Entity('subscriptions')
 export class Subscription {
+  @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
+  @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174001' })
   @Column()
   userId!: string;
 
@@ -29,6 +32,7 @@ export class Subscription {
   @JoinColumn({ name: 'userId' })
   user!: User;
 
+  @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174002' })
   @Column()
   planId!: string;
 
@@ -36,6 +40,7 @@ export class Subscription {
   @JoinColumn({ name: 'planId' })
   plan!: Plan;
 
+  @ApiProperty({ enum: SubscriptionStatus, default: SubscriptionStatus.ACTIVE })
   @Column({
     type: 'enum',
     enum: SubscriptionStatus,
@@ -43,15 +48,19 @@ export class Subscription {
   })
   status!: SubscriptionStatus;
 
+  @ApiProperty()
   @Column({ type: 'timestamp' })
   currentPeriodStart!: Date;
 
+  @ApiProperty()
   @Column({ type: 'timestamp' })
   currentPeriodEnd!: Date;
 
+  @ApiProperty()
   @CreateDateColumn()
   createdAt!: Date;
 
+  @ApiProperty()
   @UpdateDateColumn()
   updatedAt!: Date;
 }

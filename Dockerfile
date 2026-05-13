@@ -1,46 +1,41 @@
-# --- Builder Stage ---
+# Stage 1: Build
 FROM node:20-alpine AS builder
 
-# Set working directory
-WORKDIR /usr/src/app
+WORKDIR /app
 
-# Copy package.json and package-lock.json
+# Install dependencies first for better caching
 COPY package*.json ./
-
-# Install all dependencies (including devDependencies)
 RUN npm ci
 
-# Copy the rest of the application code
+# Copy source and build
 COPY . .
-
-# Build the application
 RUN npm run build
 
-# --- Runtime Stage ---
-FROM node:20-alpine
+# Remove development dependencies
+RUN npm prune --production
 
-# Set working directory
-WORKDIR /usr/src/app
+# Stage 2: Runtime
+FROM node:20-alpine AS runtime
 
-# Run as non-root user
-RUN chown -R node:node /usr/src/app
+WORKDIR /app
+
+# Copy only the necessary files from the builder stage
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package*.json ./
+
+# Set environment to production
+ENV NODE_ENV=production
+
+# Use non-root user for security
 USER node
 
-# Copy package files
-COPY --chown=node:node package*.json ./
+# Expose the application port
+EXPOSE 3000
 
-# Install only production dependencies
-RUN npm ci --omit=dev
-
-# Copy built files from the builder stage
-COPY --chown=node:node --from=builder /usr/src/app/dist ./dist
-
-# Expose application port
-EXPOSE 3001
-
-# Healthcheck to verify the app is running
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget -qO- http://localhost:3000/health || exit 1
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+  CMD node -e "fetch('http://localhost:3000/health').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"
 
 # Start the application
-CMD ["node", "dist/main.js"]
+CMD ["node", "dist/main"]

@@ -1,4 +1,5 @@
-import { IsEnum, IsString } from 'class-validator';
+import { IsEnum } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
 export enum ShareChannel {
   TWITTER = 'twitter',
@@ -8,6 +9,7 @@ export enum ShareChannel {
 }
 
 export class SharePostDto {
+  @ApiProperty({ enum: ShareChannel, example: ShareChannel.TWITTER })
   @IsEnum(ShareChannel)
   channel!: ShareChannel;
 }

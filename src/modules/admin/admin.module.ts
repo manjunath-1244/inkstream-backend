@@ -17,5 +17,6 @@ import { Plan } from '../subscriptions/entities/plan.entity';
   ],
   controllers: [AdminController],
   providers: [AdminService],
+  exports: [AdminService],
 })
 export class AdminModule {}
