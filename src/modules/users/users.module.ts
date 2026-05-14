@@ -7,10 +7,7 @@ import { UsersController } from './users.controller';
 import { PostsModule } from '../posts/posts.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([User]),
-    PostsModule,
-  ],
+  imports: [TypeOrmModule.forFeature([User]), PostsModule],
   controllers: [UsersController],
   providers: [UsersService],
   exports: [UsersService, TypeOrmModule],

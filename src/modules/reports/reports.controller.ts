@@ -1,4 +1,15 @@
-import { Controller, Post, Get, Patch, Body, Param, UseGuards, Query, ParseUUIDPipe } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Patch,
+  Body,
+  Param,
+  UseGuards,
+  Query,
+  ParseUUIDPipe,
+} from '@nestjs/common';
+import { IsEnum, IsNotEmpty } from 'class-validator';
 import { ReportsService } from './reports.service';
 import { CreateReportDto } from './dto/create-report.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -7,10 +18,20 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../users/entities/user.entity';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ReportStatus, Report } from './entities/report.entity';
-import { ApiTags, ApiOperation, ApiOkResponse, ApiBearerAuth, ApiParam, ApiProperty, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiOkResponse,
+  ApiBearerAuth,
+  ApiParam,
+  ApiProperty,
+  ApiQuery,
+} from '@nestjs/swagger';
 
 class UpdateReportStatusDto {
   @ApiProperty({ enum: ReportStatus, example: ReportStatus.RESOLVED })
+  @IsEnum(ReportStatus)
+  @IsNotEmpty()
   status!: ReportStatus;
 }
 
@@ -24,7 +45,10 @@ export class ReportsController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Submit a new report' })
   @ApiOkResponse({ type: Report, description: 'Report submitted successfully' })
-  async create(@CurrentUser() user: any, @Body() createReportDto: CreateReportDto) {
+  async create(
+    @CurrentUser() user: any,
+    @Body() createReportDto: CreateReportDto,
+  ) {
     return this.reportsService.create(user.id, createReportDto);
   }
 
@@ -46,7 +70,10 @@ export class ReportsController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update report status (Admin/Moderator only)' })
   @ApiParam({ name: 'id', description: 'Report UUID' })
-  @ApiOkResponse({ type: Report, description: 'Report status updated successfully' })
+  @ApiOkResponse({
+    type: Report,
+    description: 'Report status updated successfully',
+  })
   async updateStatus(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateReportStatusDto,

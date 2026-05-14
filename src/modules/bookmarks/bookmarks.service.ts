@@ -18,7 +18,9 @@ export class BookmarksService {
     const post = await this.postRepo.findOne({ where: { id: postId } });
     if (!post) throw new NotFoundException('Post not found');
 
-    const existing = await this.bookmarkRepo.findOne({ where: { userId, postId } });
+    const existing = await this.bookmarkRepo.findOne({
+      where: { userId, postId },
+    });
 
     if (existing) {
       await this.bookmarkRepo.remove(existing);
@@ -43,7 +45,7 @@ export class BookmarksService {
     });
 
     return {
-      items: items.map(i => i.post),
+      items: items.map((i) => i.post),
       meta: {
         totalItems: total,
         itemCount: items.length,

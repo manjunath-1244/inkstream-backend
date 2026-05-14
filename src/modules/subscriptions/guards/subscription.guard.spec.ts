@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { SubscriptionGuard } from './subscription.guard';
 import { SubscriptionsService } from '../subscriptions.service';
 import { Reflector } from '@nestjs/core';
-import { ExecutionContext, ForbiddenException } from '@nestjs/common';
+import { ForbiddenException } from '@nestjs/common';
 import { PlanCode } from '../entities/plan.entity';
 
 describe('SubscriptionGuard', () => {
@@ -49,7 +49,7 @@ describe('SubscriptionGuard', () => {
   it('should throw ForbiddenException if user has no subscription', async () => {
     reflector.getAllAndOverride = jest.fn().mockReturnValue(PlanCode.PREMIUM);
     (service.findActiveSubscription as jest.Mock).mockResolvedValue(null);
-    
+
     const context = {
       getHandler: jest.fn(),
       getClass: jest.fn(),
@@ -57,6 +57,8 @@ describe('SubscriptionGuard', () => {
       getRequest: jest.fn().mockReturnValue({ user: { id: '1' } }),
     } as any;
 
-    await expect(guard.canActivate(context)).rejects.toThrow(ForbiddenException);
+    await expect(guard.canActivate(context)).rejects.toThrow(
+      ForbiddenException,
+    );
   });
 });

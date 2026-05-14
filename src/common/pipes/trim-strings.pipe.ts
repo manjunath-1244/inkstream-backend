@@ -2,12 +2,12 @@ import { PipeTransform, Injectable, ArgumentMetadata } from '@nestjs/common';
 
 @Injectable()
 export class TrimStringsPipe implements PipeTransform {
-  transform(value: any, metadata: ArgumentMetadata) {
+  transform(value: any, _metadata: ArgumentMetadata): any {
     if (this.isObj(value)) {
       return this.trim(value);
     }
     if (typeof value === 'string') {
-      return value.trim();
+      return value.trim() as any;
     }
     return value;
   }
@@ -16,7 +16,7 @@ export class TrimStringsPipe implements PipeTransform {
     return typeof obj === 'object' && obj !== null;
   }
 
-  private trim(values: any) {
+  private trim(values: any): any {
     Object.keys(values).forEach((key) => {
       if (key !== 'password') {
         if (this.isObj(values[key])) {

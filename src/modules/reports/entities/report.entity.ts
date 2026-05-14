@@ -1,4 +1,11 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+} from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -34,7 +41,10 @@ export class Report {
   })
   targetType!: ReportTargetType;
 
-  @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174002', description: 'ID of the post, comment, or user being reported' })
+  @ApiProperty({
+    example: '123e4567-e89b-12d3-a456-426614174002',
+    description: 'ID of the post, comment, or user being reported',
+  })
   @Column()
   targetId!: string;
 

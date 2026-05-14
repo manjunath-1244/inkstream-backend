@@ -1,14 +1,19 @@
-import { Injectable, UnauthorizedException, ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThan } from 'typeorm';
+import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import ms from 'ms';
 import * as crypto from 'crypto';
 import { UsersService } from '../users/users.service';
 import { RegisterDto } from './dto/register.dto';
-import { User, UserStatus } from '../users/entities/user.entity';
+import { UserStatus } from '../users/entities/user.entity';
 import { RefreshToken } from './entities/refresh-token.entity';
 
 @Injectable()
@@ -32,7 +37,9 @@ export class AuthService {
       email: dto.email,
       passwordHash: hashedPassword,
       displayName: dto.displayName,
-      username: dto.username || (dto.email.split('@')[0] + Math.floor(Math.random() * 1000)),
+      username:
+        dto.username ||
+        dto.email.split('@')[0] + Math.floor(Math.random() * 1000),
     });
 
     return this.generateTokens(user);
@@ -48,7 +55,8 @@ export class AuthService {
 
     const match = await bcrypt.compare(pass, user.passwordHash);
     if (match) {
-      const { passwordHash, ...result } = user;
+      const { passwordHash: _passwordHash, ...result } = user;
+
       return result;
     }
     return null;
@@ -60,13 +68,13 @@ export class AuthService {
 
   async generateTokens(user: any) {
     const payload = { email: user.email, sub: user.id, role: user.role };
-    
+
     const accessToken = this.jwtService.sign(payload);
-    
+
     // Generate Refresh Token
     const refreshTokenStr = crypto.randomBytes(40).toString('hex');
     const refreshTokenHash = await bcrypt.hash(refreshTokenStr, 10);
-    
+
     const ttl = this.configService.get<string>('JWT_REFRESH_TTL', '7d');
     const expiresAt = new Date(Date.now() + ms(ttl as any));
 
@@ -133,7 +141,10 @@ export class AuthService {
   async forgotPassword(email: string) {
     const user = await this.usersService.findByEmail(email);
     if (!user) {
-      return { message: 'If your email exists in our system, you will receive a reset link.' };
+      return {
+        message:
+          'If your email exists in our system, you will receive a reset link.',
+      };
     }
 
     const token = crypto.randomBytes(32).toString('hex');
@@ -144,21 +155,26 @@ export class AuthService {
       resetPasswordExpires: new Date(Date.now() + 3600000), // 1 hour
     });
 
-    console.log(`[AUTH] Reset Password Link: http://localhost:3001/auth/reset-password?token=${token}`);
-    
-    return { message: 'If your email exists in our system, you will receive a reset link.' };
+    console.log(
+      `[AUTH] Reset Password Link: http://localhost:3001/auth/reset-password?token=${token}`,
+    );
+
+    return {
+      message:
+        'If your email exists in our system, you will receive a reset link.',
+    };
   }
 
   async resetPassword(token: string, newPassword: string) {
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
     const user = await this.usersService.findByResetToken(hashedToken);
-    
+
     if (!user || user.resetPasswordExpires! < new Date()) {
       throw new UnauthorizedException('Invalid or expired reset token');
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-    
+
     await this.usersService.update(user.id, {
       passwordHash: hashedPassword,
       resetPasswordToken: undefined,
@@ -166,7 +182,10 @@ export class AuthService {
     });
 
     // Invalidate all refresh tokens
-    await this.refreshTokenRepo.update({ userId: user.id }, { revokedAt: new Date() });
+    await this.refreshTokenRepo.update(
+      { userId: user.id },
+      { revokedAt: new Date() },
+    );
 
     return { message: 'Password reset successfully' };
   }

@@ -1,98 +1,120 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# InkStream — Creator Content Platform (Backend)
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+InkStream is a production-grade NestJS backend for a creator-centric content platform. This project serves as a comprehensive integration of advanced NestJS concepts, including modular architecture, RBAC, TypeORM migrations, automated testing, and containerization.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## 1. Project Overview
+InkStream is designed to facilitate a Substack-like environment where Creators publish content, Readers interact through likes and comments, and a tiered Subscription model gates premium content. The system also includes robust Moderation and Administration tools to ensure platform integrity.
 
-## Description
+### Why this project exists
+This project acts as an integration test for the full NestJS building blocks: modules, guards, pipes, filters, JWT, RBAC, TypeORM, Docker, Jest, and Swagger. It demonstrates the ability to translate complex domain requirements into a clean, scalable, and secure backend architecture.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## 2. Personas & RBAC Matrix
 
-## Project setup
+| Persona | Description | Key Actions |
+| :--- | :--- | :--- |
+| **Reader (USER)** | Standard user | Browses posts, likes, comments, follows, bookmarks. |
+| **Subscriber** | Paid user | A USER with an active subscription. Can access PREMIUM posts. |
+| **Creator** | Content producer | A USER upgraded to publish posts and set paywalls. |
+| **Moderator** | Content police | Reviews reports, hides flagged content, suspends users. |
+| **Admin** | Platform owner | Full control, manages roles, views metrics and audit logs. |
 
-```bash
-$ npm install
-```
+### RBAC Matrix (Permissions)
+| Action | USER | CREATOR | MODERATOR | ADMIN |
+| :--- | :---: | :---: | :---: | :---: |
+| Create Post | N | Y | N | Y |
+| Edit/Delete Own Post | N | Y | N | Y |
+| Edit/Delete Any Post | N | N | Delete Only | Y |
+| Comment/Like/Follow | Y | Y | Y | Y |
+| Hide Post/Suspend User | N | N | Y | Y |
+| Resolve Report | N | N | Y | Y |
+| Manage Roles/Audit Logs | N | N | N | Y |
 
-## Compile and run the project
+## 3. Technology Stack
 
-```bash
-# development
-$ npm run start
+- **Runtime**: Node.js 20 LTS + TypeScript (Strict mode enabled)
+- **Framework**: NestJS (v11+)
+- **Database**: PostgreSQL 15+ (TypeORM with Migrations)
+- **Auth**: Passport.js + JWT + Bcrypt (Cost 10)
+- **Validation**: `class-validator` + `class-transformer` (Global ValidationPipe)
+- **Config**: `@nestjs/config` + `Joi` (Boot-time env validation)
+- **Containerization**: Docker (Multi-stage) + Docker Compose
+- **Testing**: Jest (Unit & E2E)
+- **Documentation**: Swagger / OpenAPI (Available at `/api/docs`)
 
-# watch mode
-$ npm run start:dev
+## 4. Functional Requirements
 
-# production mode
-$ npm run start:prod
-```
+### 4.1 Authentication & Authorization
+- **Register/Login**: Secure onboarding with hashed passwords and JWT issuance.
+- **Token Lifecycle**: 15m Access Tokens + 7d Refresh Tokens (hashed and stored in DB).
+- **Password Reset**: Token-based reset flow with links logged to console.
+- **Guards**: Global `JwtAuthGuard` with `@Public()` support and `RolesGuard` for RBAC.
 
-## Run tests
+### 4.2 Content Management (Posts & Comments)
+- **Posts**: Markdown support, auto-generated slugs, reading time calculation.
+- **Visibility**: PUBLIC vs. PREMIUM content gating.
+- **Comments**: Threaded comments (1-level nesting) with a 15-minute edit window.
+- **Soft Deletes**: Posts and comments are never permanently deleted from the DB.
 
-```bash
-# unit tests
-$ npm run test
+### 4.3 Interactions & Social Graph
+- **Likes**: Idempotent toggle behavior for posts and comments.
+- **Follows**: User-to-user follow graph with block-list enforcement.
+- **Bookmarks**: Private list of saved posts.
+- **Feed**: Personalized timeline of posts from followed creators.
 
-# e2e tests
-$ npm run test:e2e
+### 4.4 Subscriptions & Gating
+- **Plans**: Tiered pricing (FREE, BASIC, PREMIUM).
+- **Payment Lifecycle**: Simulated checkout and webhook-based renewal/cancellation.
+- **SubscriptionGuard**: Enforces `@RequiresPlan` requirements on premium content.
 
-# test coverage
-$ npm run test:cov
-```
+### 4.5 Safety & Moderation
+- **Reporting**: User-generated reports for posts, comments, or users.
+- **Moderation Actions**: Post hiding, user suspension (24h/7d), and permanent bans.
+- **Audit Logs**: Comprehensive tracking of all administrative actions.
 
-## Deployment
+## 5. Local Setup & DevOps
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+### Prerequisites
+- Docker & Docker Compose
+- Node.js 20+ (if running without Docker)
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### Setup Instructions
+1.  **Clone the Repository**:
+    ```bash
+    git clone <repo-url>
+    cd inkstream-backend
+    ```
+2.  **Environment Configuration**:
+    ```bash
+    cp .env.example .env
+    ```
+3.  **Start the Stack**:
+    ```bash
+    docker compose up --build
+    ```
+    *This command brings up the App, PostgreSQL, and pgAdmin. The app is reachable at `http://localhost:3000`.*
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
+### Database Operations
+- **Seed Data**: `npm run seed:categories` (Run after the first boot to populate essential data).
+- **Migrations**: TypeORM migrations are used to manage schema. Schema sync is only permitted in local dev.
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## 6. Testing & Quality
+- **Unit Tests**: `npm run test` (Service and Controller level mocks).
+- **Coverage**: `npm run test:cov` (Target: 80% Statements, 75% Branches).
+- **Linting**: `npm run lint` and `npm run format:check`.
 
-## Resources
+## 7. Definition of Done (Project Acceptance Criteria)
+- [ ] `docker compose up --build` works from a fresh clone.
+- [ ] All migrations run cleanly on a fresh database.
+- [ ] Swagger documentation is complete for every endpoint.
+- [ ] Test coverage meets thresholds (80% Stmt / 75% Branch).
+- [ ] Zero lint/format warnings.
+- [ ] No N+1 queries on list endpoints.
+- [ ] No secrets in source; `.env.example` is current.
+- [ ] Every guard, pipe, and decorator has corresponding unit tests.
+- [ ] README and ARCHITECTURE.md are accurate.
 
-Check out a few resources that may come in handy when working with NestJS:
+## 8. API Documentation
+The interactive API documentation is available at:
+**[http://localhost:3000/api/docs](http://localhost:3000/api/docs)**
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
 
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).

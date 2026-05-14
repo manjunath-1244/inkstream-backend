@@ -20,14 +20,14 @@ describe('TrimStringsPipe', () => {
     const input = {
       name: '  John  ',
       info: {
-        bio: '  Developer  '
-      }
+        bio: '  Developer  ',
+      },
     };
     const output = {
       name: 'John',
       info: {
-        bio: 'Developer'
-      }
+        bio: 'Developer',
+      },
     };
     expect(pipe.transform(input, {} as any)).toEqual(output);
   });
@@ -35,11 +35,11 @@ describe('TrimStringsPipe', () => {
   it('should NOT trim password field', () => {
     const input = {
       username: '  user  ',
-      password: '  pass123  '
+      password: '  pass123  ',
     };
     const output = {
       username: 'user',
-      password: '  pass123  '
+      password: '  pass123  ',
     };
     expect(pipe.transform(input, {} as any)).toEqual(output);
   });

@@ -7,7 +7,6 @@ describe('InkStream Core Flow (e2e)', () => {
   let app: INestApplication;
   let accessToken: string;
   let postId: string;
-  let commentId: string;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -104,6 +103,7 @@ describe('InkStream Core Flow (e2e)', () => {
       .expect((res) => {
         expect(res.body.title).toBe(testPost.title);
         expect(res.body.slug).toBeDefined();
+        // @ts-expect-error - body property is not typed in supertest
         postId = res.body.id;
       });
   });

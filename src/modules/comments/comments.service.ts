@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -32,7 +36,9 @@ export class CommentsService {
     let parentCommentId = dto.parentCommentId;
 
     if (parentCommentId) {
-      const parent = await this.commentRepo.findOne({ where: { id: parentCommentId } });
+      const parent = await this.commentRepo.findOne({
+        where: { id: parentCommentId },
+      });
       if (!parent) throw new NotFoundException('Parent comment not found');
 
       if (await this.usersService.isBlocked(authorId, parent.authorId)) {
@@ -57,7 +63,9 @@ export class CommentsService {
     await this.postRepo.increment({ id: postId }, 'commentCount', 1);
 
     if (parentCommentId) {
-      const parent = await this.commentRepo.findOne({ where: { id: parentCommentId } });
+      const parent = await this.commentRepo.findOne({
+        where: { id: parentCommentId },
+      });
       if (parent) {
         this.eventEmitter.emit('comment.replied', {
           replierId: authorId,
@@ -117,7 +125,9 @@ export class CommentsService {
     const timeElapsed = Date.now() - comment.createdAt.getTime();
 
     if (timeElapsed > fifteenMinutesInMs) {
-      throw new ForbiddenException('Comments cannot be edited after 15 minutes');
+      throw new ForbiddenException(
+        'Comments cannot be edited after 15 minutes',
+      );
     }
 
     comment.body = dto.body;
@@ -125,9 +135,9 @@ export class CommentsService {
   }
 
   async remove(id: string, user: any) {
-    const comment = await this.commentRepo.findOne({ 
+    const comment = await this.commentRepo.findOne({
       where: { id },
-      relations: ['post'] 
+      relations: ['post'],
     });
     if (!comment) throw new NotFoundException('Comment not found');
 
@@ -137,7 +147,9 @@ export class CommentsService {
     const isModOrAdmin = [Role.MODERATOR, Role.ADMIN].includes(user.role);
 
     if (!isOwner && !isPostAuthor && !isModOrAdmin) {
-      throw new ForbiddenException('You do not have permission to delete this comment');
+      throw new ForbiddenException(
+        'You do not have permission to delete this comment',
+      );
     }
 
     await this.commentRepo.softDelete(id);

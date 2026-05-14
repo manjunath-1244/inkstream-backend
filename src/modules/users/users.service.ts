@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -25,7 +30,9 @@ export class UsersService {
   }
 
   async findByResetToken(token: string): Promise<User | null> {
-    return this.userRepository.findOne({ where: { resetPasswordToken: token } });
+    return this.userRepository.findOne({
+      where: { resetPasswordToken: token },
+    });
   }
 
   async create(userData: Partial<User>): Promise<User> {
@@ -48,24 +55,24 @@ export class UsersService {
       throw new BadRequestException('You cannot follow yourself');
     }
 
-    const user = await this.userRepository.findOne({ 
-      where: { id: userId }, 
-      relations: ['following'] 
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: ['following'],
     });
-    const target = await this.userRepository.findOne({ 
-      where: { id: targetId }, 
-      relations: ['blockedUsers'] 
+    const target = await this.userRepository.findOne({
+      where: { id: targetId },
+      relations: ['blockedUsers'],
     });
 
     if (!user || !target) throw new NotFoundException('User not found');
 
     // Check if target has blocked the user
-    const isBlocked = target.blockedUsers.some(u => u.id === userId);
+    const isBlocked = target.blockedUsers.some((u) => u.id === userId);
     if (isBlocked) {
       throw new ForbiddenException('You are blocked by this user');
     }
 
-    if (!user.following.some(u => u.id === targetId)) {
+    if (!user.following.some((u) => u.id === targetId)) {
       user.following.push(target);
       await this.userRepository.save(user);
 
@@ -77,13 +84,13 @@ export class UsersService {
   }
 
   async unfollow(userId: string, targetId: string): Promise<void> {
-    const user = await this.userRepository.findOne({ 
-      where: { id: userId }, 
-      relations: ['following'] 
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: ['following'],
     });
     if (!user) throw new NotFoundException('User not found');
 
-    user.following = user.following.filter(u => u.id !== targetId);
+    user.following = user.following.filter((u) => u.id !== targetId);
     await this.userRepository.save(user);
   }
 
@@ -92,39 +99,39 @@ export class UsersService {
       throw new BadRequestException('You cannot block yourself');
     }
 
-    const user = await this.userRepository.findOne({ 
-      where: { id: userId }, 
-      relations: ['blockedUsers', 'following', 'followers'] 
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: ['blockedUsers', 'following', 'followers'],
     });
-    const target = await this.userRepository.findOne({ 
+    const target = await this.userRepository.findOne({
       where: { id: targetId },
-      relations: ['following']
+      relations: ['following'],
     });
 
     if (!user || !target) throw new NotFoundException('User not found');
 
     // 1. Add to blocked list
-    if (!user.blockedUsers.some(u => u.id === targetId)) {
+    if (!user.blockedUsers.some((u) => u.id === targetId)) {
       user.blockedUsers.push(target);
     }
 
     // 2. Unfollow the target
-    user.following = user.following.filter(u => u.id !== targetId);
+    user.following = user.following.filter((u) => u.id !== targetId);
 
     // 3. Force target to unfollow the current user (reciprocal)
-    target.following = target.following.filter(u => u.id !== userId);
+    target.following = target.following.filter((u) => u.id !== userId);
 
     await this.userRepository.save([user, target]);
   }
 
   async unblock(userId: string, targetId: string): Promise<void> {
-    const user = await this.userRepository.findOne({ 
-      where: { id: userId }, 
-      relations: ['blockedUsers'] 
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: ['blockedUsers'],
     });
     if (!user) throw new NotFoundException('User not found');
 
-    user.blockedUsers = user.blockedUsers.filter(u => u.id !== targetId);
+    user.blockedUsers = user.blockedUsers.filter((u) => u.id !== targetId);
     await this.userRepository.save(user);
   }
 
@@ -140,8 +147,8 @@ export class UsersService {
 
     if (!userA || !userB) return false;
 
-    const aBlocksB = userA.blockedUsers.some(u => u.id === userIdB);
-    const bBlocksA = userB.blockedUsers.some(u => u.id === userIdA);
+    const aBlocksB = userA.blockedUsers.some((u) => u.id === userIdB);
+    const bBlocksA = userB.blockedUsers.some((u) => u.id === userIdA);
 
     return aBlocksB || bBlocksA;
   }
@@ -152,16 +159,17 @@ export class UsersService {
       where: { id: userId },
       relations: ['blockedUsers'],
     });
-    
+
     // Users who have blocked the current user
-    const blockers = await this.userRepository.createQueryBuilder('user')
+    const blockers = await this.userRepository
+      .createQueryBuilder('user')
       .innerJoin('user.blockedUsers', 'blocked')
       .where('blocked.id = :userId', { userId })
       .getMany();
 
     const blockedIds = new Set<string>();
-    user?.blockedUsers.forEach(u => blockedIds.add(u.id));
-    blockers.forEach(u => blockedIds.add(u.id));
+    user?.blockedUsers.forEach((u) => blockedIds.add(u.id));
+    blockers.forEach((u) => blockedIds.add(u.id));
 
     return Array.from(blockedIds);
   }
@@ -173,7 +181,7 @@ export class UsersService {
     });
     if (!user) throw new NotFoundException('User not found');
 
-    const following = user.following.some(u => u.id === targetId);
+    const following = user.following.some((u) => u.id === targetId);
     return { following };
   }
 
@@ -184,7 +192,12 @@ export class UsersService {
     });
     if (!user) return null;
 
-    const { passwordHash, resetPasswordToken, resetPasswordExpires, ...result } = user;
+    const {
+      passwordHash: _ph,
+      resetPasswordToken: _rpt,
+      resetPasswordExpires: _rpe,
+      ...result
+    } = user;
     return {
       ...result,
       followersCount: user.followers.length,

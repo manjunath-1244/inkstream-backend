@@ -1,4 +1,8 @@
-import { ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ExecutionContext,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
@@ -17,12 +21,17 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
 
     try {
       const result = await super.canActivate(context);
-      console.log(`JwtAuthGuard: canActivate result for isPublic=${isPublic}: ${result}`);
+      console.log(
+        `JwtAuthGuard: canActivate result for isPublic=${String(isPublic)}: ${String(!!result)}`,
+      );
       if (result) {
         return true;
       }
     } catch (error: any) {
-      console.log(`JwtAuthGuard: error in canActivate for isPublic=${isPublic}:`, error?.message);
+      console.log(
+        `JwtAuthGuard: error in canActivate for isPublic=${isPublic}:`,
+        error?.message as string,
+      );
       if (isPublic) {
         return true;
       }
@@ -32,8 +41,15 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     return isPublic;
   }
 
-  handleRequest(err, user, info, context: ExecutionContext) {
-    console.log(`JwtAuthGuard: handleRequest - user found: ${!!user}, err: ${!!err}`);
+  handleRequest(
+    err: any,
+    user: any,
+    _info: any,
+    context: ExecutionContext,
+  ): any {
+    console.log(
+      `JwtAuthGuard: handleRequest - user found: ${!!user}, err: ${!!err}`,
+    );
     if (user) {
       return user;
     }

@@ -28,11 +28,17 @@ export class AuditLog {
   @Column()
   action!: string;
 
-  @ApiProperty({ example: 'USER', description: 'Type of entity the action was performed on' })
+  @ApiProperty({
+    example: 'USER',
+    description: 'Type of entity the action was performed on',
+  })
   @Column()
   targetType!: string;
 
-  @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174002', required: false })
+  @ApiProperty({
+    example: '123e4567-e89b-12d3-a456-426614174002',
+    required: false,
+  })
   @Column({ nullable: true })
   targetId?: string;
 

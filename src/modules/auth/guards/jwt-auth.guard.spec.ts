@@ -1,4 +1,3 @@
-import { ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { UnauthorizedException } from '@nestjs/common';
@@ -32,7 +31,10 @@ describe('JwtAuthGuard', () => {
         getClass: jest.fn(),
       } as any;
 
-      expect(() => guard.handleRequest(null, null, null, context)).toThrow(UnauthorizedException);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      expect(() => guard.handleRequest(null, null, null, context)).toThrow(
+        UnauthorizedException,
+      );
     });
 
     it('should return null if no user but public', () => {

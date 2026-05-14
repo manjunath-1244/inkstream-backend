@@ -6,7 +6,7 @@ import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 describe('PostsController', () => {
   let controller: PostsController;
   let postsService: PostsService;
-  let subscriptionsService: SubscriptionsService;
+  let _subscriptionsService: SubscriptionsService;
 
   const mockPostsService = () => ({
     create: jest.fn(),
@@ -33,19 +33,56 @@ describe('PostsController', () => {
 
     controller = module.get<PostsController>(PostsController);
     postsService = module.get<PostsService>(PostsService);
-    subscriptionsService = module.get<SubscriptionsService>(SubscriptionsService);
+    _subscriptionsService =
+      module.get<SubscriptionsService>(SubscriptionsService);
   });
 
   it('should be defined', () => {
     expect(controller).toBeDefined();
   });
 
-  describe('create', () => {
-    it('should call service.create', async () => {
-      const user = { id: 'user-1' };
-      const dto = { title: 'Test' };
-      await controller.create(dto as any, user);
-      expect(postsService.create).toHaveBeenCalledWith(dto, 'user-1');
+  describe('findAll', () => {
+    it('should call service.findAll', async () => {
+      const pagination = { page: 1, limit: 10 };
+      await controller.findAll(pagination, { id: 'u1' });
+      expect(postsService.findAll).toHaveBeenCalledWith(pagination, 'u1');
+    });
+  });
+
+  describe('getTrending', () => {
+    it('should call service.getTrending', async () => {
+      const pagination = { page: 1, limit: 10 };
+      await controller.getTrending(pagination, { id: 'u1' });
+      expect(postsService.getTrending).toHaveBeenCalledWith(pagination, 'u1');
+    });
+  });
+
+  describe('findOne', () => {
+    it('should call service.findOne and incrementViewCount', async () => {
+      const post = { id: 'p1', authorId: 'a1', visibility: 'PUBLIC' };
+      (postsService.findOne as jest.Mock).mockResolvedValue(post);
+
+      const result = await controller.findOne('p1', { id: 'u1' });
+      expect(postsService.findOne).toHaveBeenCalledWith('p1');
+      expect(postsService.incrementViewCount).toHaveBeenCalledWith('p1');
+      expect(result).toEqual(post);
+    });
+  });
+
+  describe('update', () => {
+    it('should call service.update with user context', async () => {
+      const user = { id: 'u1', role: 'USER' };
+      const dto = { title: 'Updated' };
+      await controller.update('p1', dto, user);
+      expect(postsService.update).toHaveBeenCalledWith('p1', dto, user);
+    });
+  });
+
+  describe('remove', () => {
+    it('should call service.remove with user context', async () => {
+      const user = { id: 'u1', role: 'USER' };
+      await controller.remove('p1', user);
+      expect(postsService.remove).toHaveBeenCalledWith('p1', user);
     });
   });
 });

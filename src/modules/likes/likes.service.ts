@@ -45,13 +45,13 @@ export class LikesService {
         await manager.save(newLike);
         post.likeCount += 1;
         await manager.save(post);
-        
+
         this.eventEmitter.emit('post.liked', {
           likerId: userId,
           authorId: post.authorId,
           postId: post.id,
         });
-        
+
         return { liked: true, count: post.likeCount };
       }
     });
@@ -59,7 +59,9 @@ export class LikesService {
 
   async toggleCommentLike(userId: string, commentId: string) {
     return await this.dataSource.transaction(async (manager) => {
-      const comment = await manager.findOne(Comment, { where: { id: commentId } });
+      const comment = await manager.findOne(Comment, {
+        where: { id: commentId },
+      });
       if (!comment) throw new NotFoundException('Comment not found');
 
       if (await this.usersService.isBlocked(userId, comment.authorId)) {
@@ -98,8 +100,9 @@ export class LikesService {
     });
 
     return {
-      items: items.map(i => {
-        const { passwordHash, ...user } = i.user;
+      items: items.map((i) => {
+        const { passwordHash: _passwordHash, ...user } = i.user;
+
         return user;
       }),
       meta: {

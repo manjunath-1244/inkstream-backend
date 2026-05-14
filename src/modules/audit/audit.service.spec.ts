@@ -7,7 +7,7 @@ describe('AuditService', () => {
   let service: AuditService;
   let repo: any;
 
-  const mockAuditRepo = () => ({
+  const mockRepo = () => ({
     create: jest.fn(),
     save: jest.fn(),
     findAndCount: jest.fn(),
@@ -17,7 +17,7 @@ describe('AuditService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuditService,
-        { provide: getRepositoryToken(AuditLog), useFactory: mockAuditRepo },
+        { provide: getRepositoryToken(AuditLog), useFactory: mockRepo },
       ],
     }).compile();
 
@@ -29,15 +29,18 @@ describe('AuditService', () => {
     expect(service).toBeDefined();
   });
 
-  describe('record', () => {
-    it('should create and save an audit log', async () => {
-      const data = { actorId: 'u1', action: 'TEST', targetType: 'POST', targetId: 'p1' };
-      repo.create.mockReturnValue(data);
-      repo.save.mockResolvedValue({ id: 'a1', ...data });
+  it('record should call create and save', async () => {
+    repo.create.mockReturnValue({ action: 'TEST' });
+    await service.record('a1', 'TEST', 'USER');
+    expect(repo.create).toHaveBeenCalled();
+    expect(repo.save).toHaveBeenCalled();
+  });
 
-      await service.record(data.actorId, data.action, data.targetType, data.targetId);
-      expect(repo.create).toHaveBeenCalled();
-      expect(repo.save).toHaveBeenCalled();
-    });
+  it('findAll should return paginated logs', async () => {
+    const items = [{ id: '1' }];
+    repo.findAndCount.mockResolvedValue([items, 1]);
+    const result = await service.findAll(1, 10);
+    expect(result.items).toEqual(items);
+    expect(repo.findAndCount).toHaveBeenCalled();
   });
 });

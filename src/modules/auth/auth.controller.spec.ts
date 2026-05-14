@@ -15,9 +15,7 @@ describe('AuthController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
-      providers: [
-        { provide: AuthService, useFactory: mockAuthService },
-      ],
+      providers: [{ provide: AuthService, useFactory: mockAuthService }],
     }).compile();
 
     controller = module.get<AuthController>(AuthController);
@@ -30,7 +28,12 @@ describe('AuthController', () => {
 
   describe('register', () => {
     it('should call service.register', async () => {
-      const dto = { email: 't@t.com', password: 'p', displayName: 'd', username: 'u' };
+      const dto = {
+        email: 't@t.com',
+        password: 'p',
+        displayName: 'd',
+        username: 'u',
+      };
       await controller.register(dto);
       expect(service.register).toHaveBeenCalledWith(dto);
     });

@@ -1,4 +1,10 @@
-import { IsEmail, MinLength, IsString, IsNotEmpty, IsOptional } from 'class-validator';
+import {
+  IsEmail,
+  MinLength,
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+} from 'class-validator';
 import { Transform } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -10,7 +16,7 @@ export class RegisterDto {
   @IsString()
   @IsNotEmpty()
   @IsEmail({}, { message: 'Invalid email format' })
-  @Transform(({ value }) => value?.trim())
+  @Transform(({ value }) => (value as string)?.trim())
   email!: string;
 
   @ApiProperty({

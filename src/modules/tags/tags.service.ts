@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException, ConflictException, Inject, forwardRef } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  Inject,
+  forwardRef,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Tag } from './entities/tag.entity';
@@ -17,13 +23,18 @@ export class TagsService {
   ) {}
 
   async findAll() {
-    return this.tagRepository.createQueryBuilder('tag')
+    return this.tagRepository
+      .createQueryBuilder('tag')
       .loadRelationCountAndMap('tag.postCount', 'tag.posts')
       .orderBy('tag.name', 'ASC')
       .getMany();
   }
 
-  async findPostsByTag(slug: string, paginationDto: PaginationDto, userId?: string) {
+  async findPostsByTag(
+    slug: string,
+    paginationDto: PaginationDto,
+    userId?: string,
+  ) {
     const tag = await this.findBySlug(slug);
     return this.postsService.findByTag(tag.id, paginationDto, userId);
   }

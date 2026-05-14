@@ -33,7 +33,7 @@ describe('CommentsController', () => {
     it('should call service.create', async () => {
       const user = { id: 'user-1' };
       const dto = { body: 'test' };
-      await controller.create('post-1', dto as any, user);
+      await controller.create('post-1', dto, user);
       expect(service.create).toHaveBeenCalledWith('post-1', 'user-1', dto);
     });
   });

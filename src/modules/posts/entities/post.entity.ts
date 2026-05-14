@@ -99,14 +99,17 @@ export class Post {
   @ManyToOne(() => User, (user) => user.posts)
   author!: User;
 
-  @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174002', required: false })
+  @ApiProperty({
+    example: '123e4567-e89b-12d3-a456-426614174002',
+    required: false,
+  })
   @Column({ nullable: true })
   categoryId?: string;
 
   @ManyToOne(() => Category, (category) => category.id, { nullable: true })
   category?: Category;
 
-  @ManyToMany(() => Tag)
+  @ManyToMany(() => Tag, (tag) => tag.posts)
   @JoinTable({ name: 'post_tags' })
   tags!: Tag[];
 

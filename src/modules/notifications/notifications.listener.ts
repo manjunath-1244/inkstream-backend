@@ -8,7 +8,10 @@ export class NotificationsListener {
   constructor(private readonly notificationsService: NotificationsService) {}
 
   @OnEvent('user.followed')
-  async handleUserFollowed(payload: { followerId: string; followingId: string }) {
+  async handleUserFollowed(payload: {
+    followerId: string;
+    followingId: string;
+  }) {
     await this.notificationsService.create({
       recipientId: payload.followingId,
       actorId: payload.followerId,
@@ -17,7 +20,11 @@ export class NotificationsListener {
   }
 
   @OnEvent('post.liked')
-  async handlePostLiked(payload: { likerId: string; authorId: string; postId: string }) {
+  async handlePostLiked(payload: {
+    likerId: string;
+    authorId: string;
+    postId: string;
+  }) {
     await this.notificationsService.create({
       recipientId: payload.authorId,
       actorId: payload.likerId,
@@ -27,7 +34,12 @@ export class NotificationsListener {
   }
 
   @OnEvent('comment.created')
-  async handleCommentCreated(payload: { commenterId: string; postAuthorId: string; postId: string, commentId: string }) {
+  async handleCommentCreated(payload: {
+    commenterId: string;
+    postAuthorId: string;
+    postId: string;
+    commentId: string;
+  }) {
     await this.notificationsService.create({
       recipientId: payload.postAuthorId,
       actorId: payload.commenterId,
@@ -37,7 +49,12 @@ export class NotificationsListener {
   }
 
   @OnEvent('comment.replied')
-  async handleCommentReplied(payload: { replierId: string; parentCommentAuthorId: string; postId: string, commentId: string }) {
+  async handleCommentReplied(payload: {
+    replierId: string;
+    parentCommentAuthorId: string;
+    postId: string;
+    commentId: string;
+  }) {
     await this.notificationsService.create({
       recipientId: payload.parentCommentAuthorId,
       actorId: payload.replierId,
@@ -47,7 +64,11 @@ export class NotificationsListener {
   }
 
   @OnEvent('post.published')
-  async handlePostPublished(payload: { authorId: string; postId: string; followerIds: string[] }) {
+  async handlePostPublished(payload: {
+    authorId: string;
+    postId: string;
+    followerIds: string[];
+  }) {
     // Create notifications for all followers
     // In a real system, you might want to bulk insert this
     for (const followerId of payload.followerIds) {

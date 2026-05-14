@@ -26,7 +26,9 @@ export class NotificationsService {
 
   async findAll(userId: string, paginationDto: PaginationDto) {
     const page = paginationDto.page ? parseInt(paginationDto.page as any) : 1;
-    const limit = paginationDto.limit ? parseInt(paginationDto.limit as any) : 10;
+    const limit = paginationDto.limit
+      ? parseInt(paginationDto.limit as any)
+      : 10;
     const skip = (page - 1) * limit;
 
     const [items, total] = await this.notificationsRepo.findAndCount({

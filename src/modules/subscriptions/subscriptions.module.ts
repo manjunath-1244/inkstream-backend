@@ -1,7 +1,10 @@
 import { Module, Global } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SubscriptionsService } from './subscriptions.service';
-import { SubscriptionsController, WebhooksController } from './subscriptions.controller';
+import {
+  SubscriptionsController,
+  WebhooksController,
+} from './subscriptions.controller';
 import { Plan } from './entities/plan.entity';
 import { Subscription } from './entities/subscription.entity';
 

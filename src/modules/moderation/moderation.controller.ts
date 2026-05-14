@@ -1,14 +1,32 @@
-import { Controller, Post, Body, Param, UseGuards, ParseUUIDPipe } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Param,
+  UseGuards,
+  ParseUUIDPipe,
+} from '@nestjs/common';
+import { IsNumber, IsOptional, Min } from 'class-validator';
 import { AdminService } from '../admin/admin.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../users/entities/user.entity';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { ApiTags, ApiOperation, ApiOkResponse, ApiBearerAuth, ApiParam, ApiProperty } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiOkResponse,
+  ApiBearerAuth,
+  ApiParam,
+  ApiProperty,
+} from '@nestjs/swagger';
 
 class SuspendUserDto {
   @ApiProperty({ example: 24, description: 'Duration of suspension in hours' })
+  @IsNumber()
+  @IsOptional()
+  @Min(1)
   durationHours!: number;
 }
 
@@ -37,10 +55,7 @@ export class ModerationController {
   @ApiOperation({ summary: 'Hide a post (Admin/Moderator only)' })
   @ApiParam({ name: 'id', description: 'Post UUID' })
   @ApiOkResponse({ description: 'Post hidden successfully' })
-  hidePost(
-    @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() admin: any,
-  ) {
+  hidePost(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() admin: any) {
     return this.adminService.hidePost(id, admin.id);
   }
 }

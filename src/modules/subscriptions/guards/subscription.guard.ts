@@ -31,7 +31,9 @@ export class SubscriptionGuard implements CanActivate {
       return false;
     }
 
-    const subscription = await this.subscriptionsService.findActiveSubscription(user.id);
+    const subscription = await this.subscriptionsService.findActiveSubscription(
+      user.id,
+    );
 
     if (!subscription) {
       // If FREE is allowed, we might want to check that.
@@ -49,7 +51,9 @@ export class SubscriptionGuard implements CanActivate {
       [PlanCode.PREMIUM]: 2,
     };
 
-    const minRequiredWeight = Math.min(...requiredPlans.map((p) => planWeight[p]));
+    const minRequiredWeight = Math.min(
+      ...requiredPlans.map((p) => planWeight[p]),
+    );
 
     if (planWeight[userPlan] >= minRequiredWeight) {
       return true;

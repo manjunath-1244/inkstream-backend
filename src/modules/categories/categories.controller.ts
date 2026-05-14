@@ -1,28 +1,62 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, ParseUUIDPipe } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  ParseUUIDPipe,
+} from '@nestjs/common';
+import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
 import { CategoriesService } from './categories.service';
 import { Public } from '../auth/decorators/public.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../users/entities/user.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { ApiTags, ApiOperation, ApiOkResponse, ApiBearerAuth, ApiParam, ApiProperty } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiOkResponse,
+  ApiBearerAuth,
+  ApiParam,
+  ApiProperty,
+} from '@nestjs/swagger';
 import { Category } from './entities/category.entity';
 
 class CreateCategoryDto {
   @ApiProperty({ example: 'Lifestyle' })
+  @IsString()
+  @IsNotEmpty()
   name!: string;
+
   @ApiProperty({ example: 'lifestyle' })
+  @IsString()
+  @IsNotEmpty()
   slug!: string;
+
   @ApiProperty({ example: 'Posts about daily life', required: false })
+  @IsString()
+  @IsOptional()
   description?: string;
 }
 
 class UpdateCategoryDto {
   @ApiProperty({ example: 'New Lifestyle', required: false })
+  @IsString()
+  @IsOptional()
   name?: string;
+
   @ApiProperty({ example: 'new-lifestyle', required: false })
+  @IsString()
+  @IsOptional()
   slug?: string;
+
   @ApiProperty({ example: 'Updated description', required: false })
+  @IsString()
+  @IsOptional()
   description?: string;
 }
 
@@ -34,7 +68,10 @@ export class CategoriesController {
   @Public()
   @Get()
   @ApiOperation({ summary: 'Get all categories' })
-  @ApiOkResponse({ type: [Category], description: 'Returns a list of all categories' })
+  @ApiOkResponse({
+    type: [Category],
+    description: 'Returns a list of all categories',
+  })
   findAll() {
     return this.categoriesService.findAll();
   }
@@ -53,7 +90,10 @@ export class CategoriesController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a new category (Admin only)' })
-  @ApiOkResponse({ type: Category, description: 'Category created successfully' })
+  @ApiOkResponse({
+    type: Category,
+    description: 'Category created successfully',
+  })
   create(@Body() data: CreateCategoryDto) {
     return this.categoriesService.create(data);
   }
@@ -64,8 +104,14 @@ export class CategoriesController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update a category (Admin only)' })
   @ApiParam({ name: 'id', description: 'Category UUID' })
-  @ApiOkResponse({ type: Category, description: 'Category updated successfully' })
-  update(@Param('id', ParseUUIDPipe) id: string, @Body() data: UpdateCategoryDto) {
+  @ApiOkResponse({
+    type: Category,
+    description: 'Category updated successfully',
+  })
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() data: UpdateCategoryDto,
+  ) {
     return this.categoriesService.update(id, data);
   }
 

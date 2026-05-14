@@ -17,7 +17,14 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
 import { PaginationDto } from '../../common/dto/pagination.dto';
-import { ApiTags, ApiOperation, ApiOkResponse, ApiCreatedResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiOkResponse,
+  ApiCreatedResponse,
+  ApiBearerAuth,
+  ApiParam,
+} from '@nestjs/swagger';
 import { Comment } from './entities/comment.entity';
 
 @ApiTags('Comments')
@@ -30,7 +37,10 @@ export class CommentsController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a comment on a post' })
   @ApiParam({ name: 'postId', description: 'Post UUID' })
-  @ApiCreatedResponse({ type: Comment, description: 'Comment created successfully' })
+  @ApiCreatedResponse({
+    type: Comment,
+    description: 'Comment created successfully',
+  })
   create(
     @Param('postId', ParseUUIDPipe) postId: string,
     @Body() dto: CreateCommentDto,

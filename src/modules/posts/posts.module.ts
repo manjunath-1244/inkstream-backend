@@ -11,7 +11,9 @@ import { Comment } from '../comments/entities/comment.entity';
 import { PostLike } from '../likes/entities/post-like.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Post, Tag, User, Share, Comment, PostLike])],
+  imports: [
+    TypeOrmModule.forFeature([Post, Tag, User, Share, Comment, PostLike]),
+  ],
   controllers: [PostsController, FeedController],
   providers: [PostsService],
   exports: [PostsService],

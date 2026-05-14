@@ -24,7 +24,10 @@ export class Share {
   @JoinColumn({ name: 'postId' })
   post!: Post;
 
-  @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174002', required: false })
+  @ApiProperty({
+    example: '123e4567-e89b-12d3-a456-426614174002',
+    required: false,
+  })
   @Column({ nullable: true })
   userId?: string;
 
@@ -32,7 +35,10 @@ export class Share {
   @JoinColumn({ name: 'userId' })
   user?: User;
 
-  @ApiProperty({ example: 'twitter', description: 'Platform or channel where the post was shared' })
+  @ApiProperty({
+    example: 'twitter',
+    description: 'Platform or channel where the post was shared',
+  })
   @Column()
   channel!: string; // twitter, linkedin, copy_link, email
 

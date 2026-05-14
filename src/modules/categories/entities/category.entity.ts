@@ -1,4 +1,9 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+} from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 
 @Entity('categories')
@@ -15,7 +20,10 @@ export class Category {
   @Column({ unique: true })
   slug!: string;
 
-  @ApiProperty({ example: 'Posts about daily life and habits', required: false })
+  @ApiProperty({
+    example: 'Posts about daily life and habits',
+    required: false,
+  })
   @Column({ nullable: true })
   description?: string;
 

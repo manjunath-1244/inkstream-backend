@@ -42,12 +42,45 @@ describe('UsersController', () => {
     expect(controller).toBeDefined();
   });
 
-  describe('getProfile', () => {
-    it('should call service.getProfile', async () => {
-      usersService.getProfile.mockResolvedValue({ id: '1', username: 'test' });
-      const result = await controller.getProfile('test');
-      expect(usersService.getProfile).toHaveBeenCalledWith('test');
-      expect(result.username).toBe('test');
+  describe('updateProfile', () => {
+    it('should call service.update', async () => {
+      const user = { id: 'u1' };
+      const dto = { displayName: 'New Name' };
+      await controller.updateProfile(user, dto);
+      expect(usersService.update).toHaveBeenCalledWith('u1', dto);
+    });
+  });
+
+  describe('follow', () => {
+    it('should call service.follow', async () => {
+      const user = { id: 'u1' };
+      await controller.follow('u2', user);
+      expect(usersService.follow).toHaveBeenCalledWith('u1', 'u2');
+    });
+  });
+
+  describe('unfollow', () => {
+    it('should call service.unfollow', async () => {
+      const user = { id: 'u1' };
+      await controller.unfollow('u2', user);
+      expect(usersService.unfollow).toHaveBeenCalledWith('u1', 'u2');
+    });
+  });
+
+  describe('block', () => {
+    it('should call service.block', async () => {
+      const user = { id: 'u1' };
+      await controller.block('u2', user);
+      expect(usersService.block).toHaveBeenCalledWith('u1', 'u2');
+    });
+  });
+
+  describe('getUserPosts', () => {
+    it('should call postsService.findByUser', async () => {
+      const pagination = { page: 1, limit: 10 };
+      usersService.findByUsername.mockResolvedValue({ id: 'u1' });
+      await controller.getUserPosts('testuser', pagination);
+      expect(postsService.findByUser).toHaveBeenCalledWith('u1', pagination);
     });
   });
 });

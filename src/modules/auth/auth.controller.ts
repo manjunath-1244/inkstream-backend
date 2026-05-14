@@ -1,4 +1,13 @@
-import { Controller, Post, Body, UseGuards, Request, Get, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  Request,
+  Get,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -12,7 +21,13 @@ import { Role } from '../users/entities/user.entity';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
 import { Throttle } from '@nestjs/throttler';
-import { ApiTags, ApiOperation, ApiResponse, ApiOkResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiOkResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -23,7 +38,7 @@ export class AuthController {
   @Post('register')
   @ApiOperation({ summary: 'Register a new user' })
   @ApiResponse({ status: 201, description: 'User successfully registered.' })
-  async register(@Body() registerDto: RegisterDto) {
+  async register(@Body() registerDto: RegisterDto): Promise<any> {
     return this.authService.register(registerDto);
   }
 
@@ -34,7 +49,7 @@ export class AuthController {
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @ApiOperation({ summary: 'Login user' })
   @ApiOkResponse({ description: 'Returns access and refresh tokens.' })
-  async login(@Request() req, @Body() loginDto: LoginDto) {
+  async login(@Request() req: any, @Body() _loginDto: LoginDto): Promise<any> {
     return this.authService.login(req.user);
   }
 
@@ -43,7 +58,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Refresh access token' })
   @ApiOkResponse({ description: 'Returns new access and refresh tokens.' })
-  async refresh(@Body() refreshTokenDto: RefreshTokenDto) {
+  async refresh(@Body() refreshTokenDto: RefreshTokenDto): Promise<any> {
     return this.authService.refreshTokens(refreshTokenDto.refreshToken);
   }
 
@@ -52,7 +67,7 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Logout user' })
   @ApiOkResponse({ description: 'User successfully logged out.' })
-  async logout(@Body() refreshTokenDto: RefreshTokenDto) {
+  async logout(@Body() refreshTokenDto: RefreshTokenDto): Promise<any> {
     return this.authService.logout(refreshTokenDto.refreshToken);
   }
 
@@ -62,7 +77,9 @@ export class AuthController {
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @ApiOperation({ summary: 'Forgot password' })
   @ApiResponse({ status: 200, description: 'Reset link generated.' })
-  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+  async forgotPassword(
+    @Body() forgotPasswordDto: ForgotPasswordDto,
+  ): Promise<any> {
     return this.authService.forgotPassword(forgotPasswordDto.email);
   }
 
@@ -71,7 +88,9 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Reset password' })
   @ApiResponse({ status: 200, description: 'Password successfully reset.' })
-  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+  async resetPassword(
+    @Body() resetPasswordDto: ResetPasswordDto,
+  ): Promise<any> {
     return this.authService.resetPassword(
       resetPasswordDto.token,
       resetPasswordDto.newPassword,
@@ -82,7 +101,7 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiOkResponse({ description: 'Returns current user data.' })
-  getMe(@Request() req) {
+  getMe(@Request() req: any): any {
     return req.user;
   }
 

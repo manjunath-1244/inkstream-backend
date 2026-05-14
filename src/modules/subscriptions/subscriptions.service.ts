@@ -1,13 +1,11 @@
-import {
-  Injectable,
-  OnModuleInit,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, OnModuleInit, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThan, In } from 'typeorm';
 import { Plan, PlanCode } from './entities/plan.entity';
-import { Subscription, SubscriptionStatus } from './entities/subscription.entity';
+import {
+  Subscription,
+  SubscriptionStatus,
+} from './entities/subscription.entity';
 
 @Injectable()
 export class SubscriptionsService implements OnModuleInit {
@@ -25,7 +23,12 @@ export class SubscriptionsService implements OnModuleInit {
       const plans = [
         { code: PlanCode.FREE, name: 'Free', price: 0, durationDays: 3650 }, // 10 years for free
         { code: PlanCode.BASIC, name: 'Basic', price: 5, durationDays: 30 },
-        { code: PlanCode.PREMIUM, name: 'Premium', price: 15, durationDays: 30 },
+        {
+          code: PlanCode.PREMIUM,
+          name: 'Premium',
+          price: 15,
+          durationDays: 30,
+        },
       ];
       await this.planRepository.save(plans);
       console.log('Plans seeded successfully!');
@@ -34,6 +37,11 @@ export class SubscriptionsService implements OnModuleInit {
 
   async getPlans() {
     return this.planRepository.find();
+  }
+
+  async hasActiveSubscription(userId: string): Promise<boolean> {
+    const sub = await this.findActiveSubscription(userId);
+    return !!sub;
   }
 
   async findActiveSubscription(userId: string) {
@@ -58,6 +66,17 @@ export class SubscriptionsService implements OnModuleInit {
       order: { createdAt: 'DESC' },
     });
 
+    if (!sub) return null;
+
+    // Double check expiry for ACTIVE/CANCELED (useful if mocked or query cache issues)
+    if (
+      (sub.status === SubscriptionStatus.ACTIVE ||
+        sub.status === SubscriptionStatus.CANCELED) &&
+      sub.currentPeriodEnd < new Date()
+    ) {
+      return null;
+    }
+
     if (sub && sub.status === SubscriptionStatus.PAST_DUE) {
       const threeDaysAgo = new Date();
       threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
@@ -72,12 +91,17 @@ export class SubscriptionsService implements OnModuleInit {
   }
 
   async checkout(userId: string, planCode: PlanCode) {
-    const plan = await this.planRepository.findOne({ where: { code: planCode } });
+    const plan = await this.planRepository.findOne({
+      where: { code: planCode },
+    });
     if (!plan) throw new NotFoundException('Plan not found');
 
     // Cancel existing active or past_due subscriptions
     await this.subscriptionRepository.update(
-      { userId, status: In([SubscriptionStatus.ACTIVE, SubscriptionStatus.PAST_DUE]) },
+      {
+        userId,
+        status: In([SubscriptionStatus.ACTIVE, SubscriptionStatus.PAST_DUE]),
+      },
       { status: SubscriptionStatus.EXPIRED },
     );
 

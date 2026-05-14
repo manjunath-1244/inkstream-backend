@@ -1,10 +1,26 @@
-import { Controller, Post, Get, Param, Query, UseGuards, ParseUUIDPipe, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Param,
+  Query,
+  UseGuards,
+  ParseUUIDPipe,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { LikesService } from './likes.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
 import { PaginationDto } from '../../common/dto/pagination.dto';
-import { ApiTags, ApiOperation, ApiOkResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiOkResponse,
+  ApiBearerAuth,
+  ApiParam,
+} from '@nestjs/swagger';
 
 @ApiTags('Likes')
 @Controller()
@@ -42,7 +58,9 @@ export class LikesController {
   @Get('posts/:id/likes')
   @ApiOperation({ summary: 'Get all likes for a post' })
   @ApiParam({ name: 'id', description: 'Post UUID' })
-  @ApiOkResponse({ description: 'Returns paginated list of users who liked the post' })
+  @ApiOkResponse({
+    description: 'Returns paginated list of users who liked the post',
+  })
   getPostLikes(
     @Param('id', ParseUUIDPipe) id: string,
     @Query() paginationDto: PaginationDto,

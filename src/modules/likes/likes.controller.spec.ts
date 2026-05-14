@@ -15,9 +15,7 @@ describe('LikesController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [LikesController],
-      providers: [
-        { provide: LikesService, useFactory: mockLikesService },
-      ],
+      providers: [{ provide: LikesService, useFactory: mockLikesService }],
     }).compile();
 
     controller = module.get<LikesController>(LikesController);

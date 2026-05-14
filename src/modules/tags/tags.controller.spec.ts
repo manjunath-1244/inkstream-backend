@@ -15,9 +15,7 @@ describe('TagsController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [TagsController],
-      providers: [
-        { provide: TagsService, useFactory: mockTagsService },
-      ],
+      providers: [{ provide: TagsService, useFactory: mockTagsService }],
     }).compile();
 
     controller = module.get<TagsController>(TagsController);

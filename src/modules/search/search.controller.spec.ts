@@ -13,9 +13,7 @@ describe('SearchController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [SearchController],
-      providers: [
-        { provide: PostsService, useFactory: mockPostsService },
-      ],
+      providers: [{ provide: PostsService, useFactory: mockPostsService }],
     }).compile();
 
     controller = module.get<SearchController>(SearchController);
@@ -30,7 +28,7 @@ describe('SearchController', () => {
     it('should call postsService.searchPosts', async () => {
       const user = { id: 'u1' };
       const dto = { q: 'test' };
-      await controller.searchPosts(dto as any, user);
+      await controller.searchPosts(dto, user);
       expect(postsService.searchPosts).toHaveBeenCalledWith('test', {}, 'u1');
     });
   });

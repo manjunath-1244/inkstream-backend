@@ -1,6 +1,10 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, ILike, MoreThanOrEqual, Brackets, Not } from 'typeorm';
+import { Repository, In, Brackets, Not } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Post, PostStatus } from './entities/post.entity';
 import { User } from '../users/entities/user.entity';
@@ -31,7 +35,7 @@ export class PostsService {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  private getBaseWhereClause(baseConditions: any = {}) {
+  private getBaseWhereClause(baseConditions: any = {}): any {
     return {
       ...baseConditions,
       status: PostStatus.PUBLISHED,
@@ -42,27 +46,30 @@ export class PostsService {
   // Helper method to add blocked users filter
   private async getBlockedUsersCondition(userId?: string) {
     if (!userId) return {};
-    
+
     const user = await this.userRepository.findOne({
       where: { id: userId },
       relations: ['blockedUsers'],
     });
-    
-    const blockers = await this.userRepository.createQueryBuilder('user')
+
+    const blockers = await this.userRepository
+      .createQueryBuilder('user')
       .innerJoin('user.blockedUsers', 'blocked')
       .where('blocked.id = :userId', { userId })
       .getMany();
 
     const blockedIds = new Set<string>();
-    user?.blockedUsers.forEach(u => blockedIds.add(u.id));
-    blockers.forEach(u => blockedIds.add(u.id));
+    user?.blockedUsers?.forEach((u) => blockedIds.add(u.id));
+    blockers?.forEach((u) => blockedIds.add(u.id));
 
-    return blockedIds.size > 0 ? { authorId: Not(In(Array.from(blockedIds))) } : {};
+    return blockedIds.size > 0
+      ? { authorId: Not(In(Array.from(blockedIds))) }
+      : {};
   }
 
   async create(createPostDto: CreatePostDto, authorId: string): Promise<Post> {
     const { tagIds, ...postData } = createPostDto;
-    
+
     const post = this.postRepository.create({
       ...postData,
       authorId,
@@ -110,11 +117,17 @@ export class PostsService {
   }
 
   async findOne(idOrSlug: string): Promise<Post> {
-    const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(idOrSlug);
-    
+    const isUuid =
+      /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
+        idOrSlug,
+      );
+
     const post = await this.postRepository.findOne({
-      where: isUuid 
-        ? [{ id: idOrSlug, isHidden: false }, { slug: idOrSlug, isHidden: false }] 
+      where: isUuid
+        ? [
+            { id: idOrSlug, isHidden: false },
+            { slug: idOrSlug, isHidden: false },
+          ]
         : { slug: idOrSlug, isHidden: false },
       relations: ['author', 'category', 'tags'],
     });
@@ -126,15 +139,22 @@ export class PostsService {
     return post;
   }
 
-  async update(id: string, updatePostDto: UpdatePostDto, user: any): Promise<Post> {
+  async update(
+    id: string,
+    updatePostDto: UpdatePostDto,
+    user: any,
+  ): Promise<Post> {
     const post = await this.findOne(id);
 
     // Ownership check
     if (user.role !== Role.ADMIN && post.authorId !== user.id) {
-      throw new ForbiddenException('You do not have permission to update this post');
+      throw new ForbiddenException(
+        'You do not have permission to update this post',
+      );
     }
 
     const { tagIds, ...postData } = updatePostDto;
+    const oldStatus = post.status;
     Object.assign(post, postData);
 
     if (tagIds) {
@@ -146,7 +166,10 @@ export class PostsService {
     const savedPost = await this.postRepository.save(post);
 
     // If it just became published
-    if (updatePostDto.status === PostStatus.PUBLISHED && post.status !== PostStatus.PUBLISHED) {
+    if (
+      updatePostDto.status === PostStatus.PUBLISHED &&
+      oldStatus !== PostStatus.PUBLISHED
+    ) {
       await this.notifyFollowers(savedPost);
     }
 
@@ -163,7 +186,7 @@ export class PostsService {
       this.eventEmitter.emit('post.published', {
         authorId: post.authorId,
         postId: post.id,
-        followerIds: author.followers.map(f => f.id),
+        followerIds: author.followers.map((f) => f.id),
       });
     }
   }
@@ -173,7 +196,9 @@ export class PostsService {
 
     // Ownership check
     if (user.role !== Role.ADMIN && post.authorId !== user.id) {
-      throw new ForbiddenException('You do not have permission to delete this post');
+      throw new ForbiddenException(
+        'You do not have permission to delete this post',
+      );
     }
 
     await this.postRepository.softDelete(id);
@@ -183,9 +208,13 @@ export class PostsService {
     await this.postRepository.increment({ id }, 'viewCount', 1);
   }
 
-  async incrementShareCount(id: string, channel: string, userId?: string): Promise<void> {
+  async incrementShareCount(
+    id: string,
+    channel: string,
+    userId?: string,
+  ): Promise<void> {
     const post = await this.findOne(id);
-    
+
     // 1. Record the share event
     const share = this.shareRepository.create({
       postId: post.id,
@@ -207,7 +236,7 @@ export class PostsService {
       .groupBy('share.channel')
       .getRawMany();
 
-    return stats.map(s => ({
+    return stats.map((s) => ({
       channel: s.channel,
       count: parseInt(s.count, 10),
     }));
@@ -238,7 +267,7 @@ export class PostsService {
   }
 
   async findByUser(userId: string, paginationDto: PaginationDto) {
-// ...
+    // ...
     const { page = 1, limit = 10 } = paginationDto;
     const skip = (page - 1) * limit;
 
@@ -320,7 +349,8 @@ export class PostsService {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-    const queryBuilder = this.postRepository.createQueryBuilder('post')
+    const queryBuilder = this.postRepository
+      .createQueryBuilder('post')
       .leftJoinAndSelect('post.author', 'author')
       .leftJoinAndSelect('post.category', 'category')
       .leftJoinAndSelect('post.tags', 'tags')
@@ -354,28 +384,39 @@ export class PostsService {
         where: { id: userId },
         relations: ['blockedUsers'],
       });
-      const blockers = await this.userRepository.createQueryBuilder('user')
+      const blockers = await this.userRepository
+        .createQueryBuilder('user')
         .innerJoin('user.blockedUsers', 'blocked')
         .where('blocked.id = :userId', { userId })
         .getMany();
 
       const blockedIds = new Set<string>();
-      user?.blockedUsers.forEach(u => blockedIds.add(u.id));
-      blockers.forEach(u => blockedIds.add(u.id));
+      user?.blockedUsers.forEach((u) => blockedIds.add(u.id));
+      blockers.forEach((u) => blockedIds.add(u.id));
       const blockedIdsArray = Array.from(blockedIds);
 
       if (blockedIdsArray.length > 0) {
-        queryBuilder.andWhere('post.authorId NOT IN (:...blockedIds)', { blockedIds: blockedIdsArray });
+        queryBuilder.andWhere('post.authorId NOT IN (:...blockedIds)', {
+          blockedIds: blockedIdsArray,
+        });
       }
     }
 
-    queryBuilder.orderBy('( (SELECT COUNT(*) FROM post_likes WHERE "postId" = post.id AND "createdAt" >= :sevenDaysAgo) * 3 + (SELECT COUNT(*) FROM comments WHERE "postId" = post.id AND "createdAt" >= :sevenDaysAgo AND "deletedAt" IS NULL) * 2 + (SELECT COUNT(*) FROM shares WHERE "postId" = post.id AND "createdAt" >= :sevenDaysAgo) * 4 )', 'DESC')
+    queryBuilder
+      .orderBy(
+        '( (SELECT COUNT(*) FROM post_likes WHERE "postId" = post.id AND "createdAt" >= :sevenDaysAgo) * 3 + (SELECT COUNT(*) FROM comments WHERE "postId" = post.id AND "createdAt" >= :sevenDaysAgo AND "deletedAt" IS NULL) * 2 + (SELECT COUNT(*) FROM shares WHERE "postId" = post.id AND "createdAt" >= :sevenDaysAgo) * 4 )',
+        'DESC',
+      )
       .addOrderBy('post.createdAt', 'DESC')
-      .setParameters({ sevenDaysAgo, status: PostStatus.PUBLISHED, isHidden: false })
+      .setParameters({
+        sevenDaysAgo,
+        status: PostStatus.PUBLISHED,
+        isHidden: false,
+      })
       .take(limit)
       .skip(skip);
 
-    // We use getManyAndCount but since we need the score for ordering, 
+    // We use getManyAndCount but since we need the score for ordering,
     // the queryBuilder.orderBy already handles it in SQL.
     const [items, total] = await queryBuilder.getManyAndCount();
 
@@ -391,23 +432,39 @@ export class PostsService {
     };
   }
 
-  async findByTag(tagId: string, paginationDto: PaginationDto, userId?: string) {
+  async findByTag(
+    tagId: string,
+    paginationDto: PaginationDto,
+    userId?: string,
+  ) {
     const { page = 1, limit = 10 } = paginationDto;
     const skip = (page - 1) * limit;
 
-    const blockFilter = await this.getBlockedUsersCondition(userId);
+    await this.getBlockedUsersCondition(userId);
 
-    const [items, total] = await this.postRepository.findAndCount({
-      where: {
-        tags: { id: tagId },
-        ...this.getBaseWhereClause(),
-        ...blockFilter,
-      },
-      relations: ['author', 'category', 'tags'],
-      order: { createdAt: 'DESC' },
-      take: limit,
-      skip,
-    });
+    const queryBuilder = this.postRepository
+      .createQueryBuilder('post')
+      .leftJoinAndSelect('post.author', 'author')
+      .leftJoinAndSelect('post.category', 'category')
+      .leftJoinAndSelect('post.tags', 'tags')
+      .where('tags.id = :tagId', { tagId })
+      .andWhere('post.status = :status', { status: PostStatus.PUBLISHED })
+      .andWhere('post.isHidden = :isHidden', { isHidden: false });
+
+    if (userId) {
+      const blockFilter = await this.getBlockedUsersCondition(userId);
+      if (blockFilter.authorId) {
+        queryBuilder.andWhere('post.authorId NOT IN (:...blockedIds)', {
+          blockedIds: (blockFilter.authorId as any)._value,
+        });
+      }
+    }
+
+    const [items, total] = await queryBuilder
+      .orderBy('post.createdAt', 'DESC')
+      .take(limit)
+      .skip(skip)
+      .getManyAndCount();
 
     return {
       items,
@@ -425,7 +482,8 @@ export class PostsService {
     const { page = 1, limit = 10 } = paginationDto;
     const skip = (page - 1) * limit;
 
-    const queryBuilder = this.postRepository.createQueryBuilder('post')
+    const queryBuilder = this.postRepository
+      .createQueryBuilder('post')
       .leftJoinAndSelect('post.author', 'author')
       .leftJoinAndSelect('post.category', 'category')
       .leftJoinAndSelect('post.tags', 'tags')
@@ -437,26 +495,32 @@ export class PostsService {
         where: { id: userId },
         relations: ['blockedUsers'],
       });
-      const blockers = await this.userRepository.createQueryBuilder('user')
+      const blockers = await this.userRepository
+        .createQueryBuilder('user')
         .innerJoin('user.blockedUsers', 'blocked')
         .where('blocked.id = :userId', { userId })
         .getMany();
 
       const blockedIds = new Set<string>();
-      user?.blockedUsers.forEach(u => blockedIds.add(u.id));
-      blockers.forEach(u => blockedIds.add(u.id));
+      user?.blockedUsers.forEach((u) => blockedIds.add(u.id));
+      blockers.forEach((u) => blockedIds.add(u.id));
       const blockedIdsArray = Array.from(blockedIds);
 
       if (blockedIdsArray.length > 0) {
-        queryBuilder.andWhere('post.authorId NOT IN (:...blockedIds)', { blockedIds: blockedIdsArray });
+        queryBuilder.andWhere('post.authorId NOT IN (:...blockedIds)', {
+          blockedIds: blockedIdsArray,
+        });
       }
     }
 
-    queryBuilder.andWhere(new Brackets(qb => {
-        qb.where('post.title ILIKE :q', { q: `%${q}%` })
-          .orWhere('post.contentMarkdown ILIKE :q', { q: `%${q}%` })
-          .orWhere('tags.name ILIKE :q', { q: `%${q}%` });
-      }))
+    queryBuilder
+      .andWhere(
+        new Brackets((qb) => {
+          qb.where('post.title ILIKE :q', { q: `%${q}%` })
+            .orWhere('post.contentMarkdown ILIKE :q', { q: `%${q}%` })
+            .orWhere('tags.name ILIKE :q', { q: `%${q}%` });
+        }),
+      )
       .orderBy('post.createdAt', 'DESC')
       .take(limit)
       .skip(skip);

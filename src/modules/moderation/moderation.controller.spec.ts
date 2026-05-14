@@ -14,9 +14,7 @@ describe('ModerationController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ModerationController],
-      providers: [
-        { provide: AdminService, useFactory: mockAdminService },
-      ],
+      providers: [{ provide: AdminService, useFactory: mockAdminService }],
     }).compile();
 
     controller = module.get<ModerationController>(ModerationController);
@@ -31,8 +29,12 @@ describe('ModerationController', () => {
     it('should call adminService.suspendUser', async () => {
       const dto = { durationHours: 24 };
       const admin = { id: 'admin-id' };
-      await controller.suspendUser('u1', dto as any, admin);
-      expect(adminService.suspendUser).toHaveBeenCalledWith('u1', 'admin-id', 24);
+      await controller.suspendUser('u1', dto, admin);
+      expect(adminService.suspendUser).toHaveBeenCalledWith(
+        'u1',
+        'admin-id',
+        24,
+      );
     });
   });
 });

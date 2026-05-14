@@ -1,4 +1,18 @@
-import { Controller, Get, Patch, Body, Param, NotFoundException, Post, Delete, HttpCode, HttpStatus, Query, UseGuards, ParseUUIDPipe } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Patch,
+  Body,
+  Param,
+  NotFoundException,
+  Post,
+  Delete,
+  HttpCode,
+  HttpStatus,
+  Query,
+  UseGuards,
+  ParseUUIDPipe,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -8,7 +22,13 @@ import { PaginationDto } from '../../common/dto/pagination.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { ApiTags, ApiOperation, ApiOkResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiOkResponse,
+  ApiBearerAuth,
+  ApiParam,
+} from '@nestjs/swagger';
 
 @ApiTags('Users')
 @Controller('users')
@@ -23,7 +43,7 @@ export class UsersController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiOkResponse({ type: User, description: 'Returns current user data' })
-  getMe(@CurrentUser() user: any) {
+  getMe(@CurrentUser() user: any): any {
     return user;
   }
 
@@ -31,7 +51,10 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update current user profile' })
-  @ApiOkResponse({ type: User, description: 'User profile updated successfully' })
+  @ApiOkResponse({
+    type: User,
+    description: 'User profile updated successfully',
+  })
   async updateProfile(
     @CurrentUser() user: any,
     @Body() updateProfileDto: UpdateProfileDto,
@@ -82,7 +105,10 @@ export class UsersController {
   @ApiOperation({ summary: 'Follow a user' })
   @ApiParam({ name: 'id', description: 'Target user UUID' })
   @ApiOkResponse({ description: 'Followed successfully' })
-  async follow(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: any) {
+  async follow(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: any,
+  ) {
     await this.usersService.follow(user.id, id);
     return { message: 'Followed successfully' };
   }
@@ -94,7 +120,10 @@ export class UsersController {
   @ApiOperation({ summary: 'Unfollow a user' })
   @ApiParam({ name: 'id', description: 'Target user UUID' })
   @ApiOkResponse({ description: 'Unfollowed successfully' })
-  async unfollow(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: any) {
+  async unfollow(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: any,
+  ) {
     await this.usersService.unfollow(user.id, id);
     return { message: 'Unfollowed successfully' };
   }
@@ -105,7 +134,10 @@ export class UsersController {
   @ApiOperation({ summary: 'Check if following a user' })
   @ApiParam({ name: 'id', description: 'Target user UUID' })
   @ApiOkResponse({ type: Boolean, description: 'Returns true if following' })
-  async isFollowing(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: any) {
+  async isFollowing(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: any,
+  ) {
     return this.usersService.isFollowing(user.id, id);
   }
 
@@ -116,7 +148,10 @@ export class UsersController {
   @ApiOperation({ summary: 'Block a user' })
   @ApiParam({ name: 'id', description: 'Target user UUID' })
   @ApiOkResponse({ description: 'User blocked successfully' })
-  async block(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: any) {
+  async block(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: any,
+  ) {
     await this.usersService.block(user.id, id);
     return { message: 'User blocked successfully' };
   }
@@ -128,7 +163,10 @@ export class UsersController {
   @ApiOperation({ summary: 'Unblock a user' })
   @ApiParam({ name: 'id', description: 'Target user UUID' })
   @ApiOkResponse({ description: 'User unblocked successfully' })
-  async unblock(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: any) {
+  async unblock(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: any,
+  ) {
     await this.usersService.unblock(user.id, id);
     return { message: 'User unblocked successfully' };
   }
@@ -149,7 +187,10 @@ export class UsersController {
   @Get(':username/followers')
   @ApiOperation({ summary: 'Get list of followers for a user' })
   @ApiParam({ name: 'username', description: 'User username' })
-  @ApiOkResponse({ type: [User], description: 'Returns array of follower users' })
+  @ApiOkResponse({
+    type: [User],
+    description: 'Returns array of follower users',
+  })
   async getFollowers(@Param('username') username: string) {
     const user = await this.usersService.getProfile(username);
     if (!user) throw new NotFoundException('User not found');
@@ -159,7 +200,10 @@ export class UsersController {
   @Get(':username/following')
   @ApiOperation({ summary: 'Get list of users followed by a user' })
   @ApiParam({ name: 'username', description: 'User username' })
-  @ApiOkResponse({ type: [User], description: 'Returns array of following users' })
+  @ApiOkResponse({
+    type: [User],
+    description: 'Returns array of following users',
+  })
   async getFollowing(@Param('username') username: string) {
     const user = await this.usersService.getProfile(username);
     if (!user) throw new NotFoundException('User not found');

@@ -37,7 +37,10 @@ export class Comment {
   @ManyToOne(() => Post)
   post!: Post;
 
-  @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174003', required: false })
+  @ApiProperty({
+    example: '123e4567-e89b-12d3-a456-426614174003',
+    required: false,
+  })
   @Column({ nullable: true })
   parentCommentId?: string;
 

@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Body, Param, Delete, UseGuards, ParseUUIDPipe, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Delete,
+  UseGuards,
+  ParseUUIDPipe,
+  Query,
+} from '@nestjs/common';
+import { IsString, IsNotEmpty } from 'class-validator';
 import { TagsService } from './tags.service';
 import { Public } from '../auth/decorators/public.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -7,13 +18,25 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { ApiTags, ApiOperation, ApiOkResponse, ApiBearerAuth, ApiParam, ApiProperty } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiOkResponse,
+  ApiBearerAuth,
+  ApiParam,
+  ApiProperty,
+} from '@nestjs/swagger';
 import { Tag } from './entities/tag.entity';
 
 class CreateTagDto {
   @ApiProperty({ example: 'Technology' })
+  @IsString()
+  @IsNotEmpty()
   name!: string;
+
   @ApiProperty({ example: 'technology' })
+  @IsString()
+  @IsNotEmpty()
   slug!: string;
 }
 
@@ -35,7 +58,11 @@ export class TagsController {
   @ApiOperation({ summary: 'Get posts by tag slug' })
   @ApiParam({ name: 'slug', description: 'Tag URL slug' })
   @ApiOkResponse({ description: 'Returns paginated list of posts for the tag' })
-  findPostsByTag(@Param('slug') slug: string, @Query() paginationDto: PaginationDto, @CurrentUser() user?: any) {
+  findPostsByTag(
+    @Param('slug') slug: string,
+    @Query() paginationDto: PaginationDto,
+    @CurrentUser() user?: any,
+  ) {
     return this.tagsService.findPostsByTag(slug, paginationDto, user?.id);
   }
 

@@ -13,7 +13,9 @@ export class SearchController {
   @Public()
   @Get('posts')
   @ApiOperation({ summary: 'Search for posts' })
-  @ApiOkResponse({ description: 'Returns paginated list of posts matching the search query' })
+  @ApiOkResponse({
+    description: 'Returns paginated list of posts matching the search query',
+  })
   searchPosts(@Query() searchDto: SearchPostsDto, @CurrentUser() user?: any) {
     const { q, ...paginationDto } = searchDto;
     return this.postsService.searchPosts(q, paginationDto, user?.id);

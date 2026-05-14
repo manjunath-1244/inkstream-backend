@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ConflictException, OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  OnModuleInit,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Category } from './entities/category.entity';
@@ -15,12 +20,32 @@ export class CategoriesService implements OnModuleInit {
     if (count === 0) {
       console.log('Seeding initial categories...');
       const initialCategories = [
-        { name: 'Politics', slug: 'politics', description: 'News and discussions about politics' },
-        { name: 'Technology', slug: 'technology', description: 'Latest in tech and gadgets' },
-        { name: 'Entertainment', slug: 'entertainment', description: 'Movies, music, and celebrity news' },
+        {
+          name: 'Politics',
+          slug: 'politics',
+          description: 'News and discussions about politics',
+        },
+        {
+          name: 'Technology',
+          slug: 'technology',
+          description: 'Latest in tech and gadgets',
+        },
+        {
+          name: 'Entertainment',
+          slug: 'entertainment',
+          description: 'Movies, music, and celebrity news',
+        },
         { name: 'Sports', slug: 'sports', description: 'World sports updates' },
-        { name: 'Business', slug: 'business', description: 'Finance and economy' },
-        { name: 'Lifestyle', slug: 'lifestyle', description: 'Fashion, travel, and health' },
+        {
+          name: 'Business',
+          slug: 'business',
+          description: 'Finance and economy',
+        },
+        {
+          name: 'Lifestyle',
+          slug: 'lifestyle',
+          description: 'Fashion, travel, and health',
+        },
       ];
 
       for (const cat of initialCategories) {
@@ -55,7 +80,9 @@ export class CategoriesService implements OnModuleInit {
       where: [{ name: data.name }, { slug: data.slug }],
     });
     if (existing) {
-      throw new ConflictException('Category with this name or slug already exists');
+      throw new ConflictException(
+        'Category with this name or slug already exists',
+      );
     }
     const category = this.categoryRepository.create(data);
     return this.categoryRepository.save(category);

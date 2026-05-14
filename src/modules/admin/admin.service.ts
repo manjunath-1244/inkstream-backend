@@ -5,8 +5,10 @@ import { User, UserStatus } from '../users/entities/user.entity';
 import { Post } from '../posts/entities/post.entity';
 import { Comment } from '../comments/entities/comment.entity';
 import { AuditService } from '../audit/audit.service';
-import { Subscription, SubscriptionStatus } from '../subscriptions/entities/subscription.entity';
-import { Plan } from '../subscriptions/entities/plan.entity';
+import {
+  Subscription,
+  SubscriptionStatus,
+} from '../subscriptions/entities/subscription.entity';
 
 @Injectable()
 export class AdminService {
@@ -56,13 +58,9 @@ export class AdminService {
     user.status = UserStatus.BANNED;
     await this.userRepo.save(user);
 
-    await this.auditService.record(
-      adminId,
-      'BAN_USER',
-      'USER',
-      id,
-      { previousStatus: user.status },
-    );
+    await this.auditService.record(adminId, 'BAN_USER', 'USER', id, {
+      previousStatus: user.status,
+    });
 
     return { message: `User ${user.email} has been permanently banned` };
   }
@@ -78,15 +76,15 @@ export class AdminService {
     user.suspendedUntil = suspendedUntil;
     await this.userRepo.save(user);
 
-    await this.auditService.record(
-      adminId,
-      'SUSPEND_USER',
-      'USER',
-      id,
-      { previousStatus: user.status, durationHours, suspendedUntil },
-    );
+    await this.auditService.record(adminId, 'SUSPEND_USER', 'USER', id, {
+      previousStatus: user.status,
+      durationHours,
+      suspendedUntil,
+    });
 
-    return { message: `User ${user.email} suspended for ${durationHours} hours` };
+    return {
+      message: `User ${user.email} suspended for ${durationHours} hours`,
+    };
   }
 
   async hidePost(id: string, adminId: string) {
@@ -103,6 +101,9 @@ export class AdminService {
       id,
     );
 
-    return { message: `Post ${post.isHidden ? 'hidden' : 'unhidden'} successfully`, isHidden: post.isHidden };
+    return {
+      message: `Post ${post.isHidden ? 'hidden' : 'unhidden'} successfully`,
+      isHidden: post.isHidden,
+    };
   }
 }

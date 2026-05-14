@@ -28,18 +28,28 @@ export class UpdatePostDto {
   @IsEnum(PostVisibility)
   visibility?: PostVisibility;
 
-  @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000', required: false })
+  @ApiProperty({
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    required: false,
+  })
   @IsOptional()
   @IsUUID()
   categoryId?: string;
 
-  @ApiProperty({ example: ['123e4567-e89b-12d3-a456-426614174001'], isArray: true, required: false })
+  @ApiProperty({
+    example: ['123e4567-e89b-12d3-a456-426614174001'],
+    isArray: true,
+    required: false,
+  })
   @IsOptional()
   @IsArray()
   @IsUUID(undefined, { each: true })
   tagIds?: string[];
 
-  @ApiProperty({ example: 'https://example.com/updated-image.jpg', required: false })
+  @ApiProperty({
+    example: 'https://example.com/updated-image.jpg',
+    required: false,
+  })
   @IsOptional()
   @IsString()
   coverImageUrl?: string;
