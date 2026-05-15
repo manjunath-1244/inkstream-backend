@@ -26,6 +26,8 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { ReportsModule } from './modules/reports/reports.module';
 import { HealthModule } from './modules/health/health.module';
 import { ModerationModule } from './modules/moderation/moderation.module';
+import { UploadsModule } from './modules/uploads/uploads.module';
+import { MailModule } from './modules/mail/mail.module';
 
 @Module({
   imports: [
@@ -74,6 +76,8 @@ import { ModerationModule } from './modules/moderation/moderation.module';
     }),
     HealthModule,
     ModerationModule,
+    UploadsModule,
+    MailModule,
   ],
   controllers: [AppController],
   providers: [

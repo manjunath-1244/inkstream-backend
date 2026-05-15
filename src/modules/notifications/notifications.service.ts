@@ -3,12 +3,16 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Notification, NotificationType } from './entities/notification.entity';
 import { PaginationDto } from '../../common/dto/pagination.dto';
+import { MailService } from '../mail/mail.service';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class NotificationsService {
   constructor(
     @InjectRepository(Notification)
     private readonly notificationsRepo: Repository<Notification>,
+    private readonly mailService: MailService,
+    private readonly usersService: UsersService,
   ) {}
 
   async create(data: {
@@ -21,7 +25,19 @@ export class NotificationsService {
     if (data.recipientId === data.actorId) return null;
 
     const notification = this.notificationsRepo.create(data);
-    return this.notificationsRepo.save(notification);
+    const savedNotification = await this.notificationsRepo.save(notification);
+
+    // Send email notification
+    const recipient = await this.usersService.findById(data.recipientId);
+    if (recipient && recipient.email) {
+      await this.mailService.sendNotificationEmail(
+        recipient.email,
+        `You have a new ${data.type.replace(/_/g, ' ').toLowerCase()} notification on InkStream.`,
+        data.type,
+      );
+    }
+
+    return savedNotification;
   }
 
   async findAll(userId: string, paginationDto: PaginationDto) {

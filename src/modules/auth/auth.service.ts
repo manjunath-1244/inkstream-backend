@@ -15,6 +15,7 @@ import { UsersService } from '../users/users.service';
 import { RegisterDto } from './dto/register.dto';
 import { UserStatus } from '../users/entities/user.entity';
 import { RefreshToken } from './entities/refresh-token.entity';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class AuthService {
@@ -22,6 +23,7 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly mailService: MailService,
     @InjectRepository(RefreshToken)
     private readonly refreshTokenRepo: Repository<RefreshToken>,
   ) {}
@@ -155,9 +157,7 @@ export class AuthService {
       resetPasswordExpires: new Date(Date.now() + 3600000), // 1 hour
     });
 
-    console.log(
-      `[AUTH] Reset Password Link: http://localhost:3001/auth/reset-password?token=${token}`,
-    );
+    await this.mailService.sendForgotPasswordEmail(user.email, token);
 
     return {
       message:

@@ -25,4 +25,19 @@ export const envValidationSchema = Joi.object({
   // Throttler
   THROTTLE_TTL: Joi.number().required(),
   THROTTLE_LIMIT: Joi.number().required(),
+
+  // S3 / MinIO
+  S3_ENDPOINT: Joi.string().required(),
+  S3_REGION: Joi.string().required(),
+  S3_ACCESS_KEY: Joi.string().required(),
+  S3_SECRET_KEY: Joi.string().required(),
+  S3_BUCKET: Joi.string().required(),
+  S3_PUBLIC_URL: Joi.string().required(),
+
+  // Mail
+  MAIL_HOST: Joi.string().required(),
+  MAIL_PORT: Joi.number().port().default(1025),
+  MAIL_USER: Joi.string().allow('').optional(),
+  MAIL_PASS: Joi.string().allow('').optional(),
+  MAIL_FROM: Joi.string().email().required(),
 });
