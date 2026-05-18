@@ -5,6 +5,10 @@ import { Notification, NotificationType } from './entities/notification.entity';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { NotFoundException } from '@nestjs/common';
 
+import { MailService } from '../mail/mail.service';
+import { UsersService } from '../users/users.service';
+import { NotificationsGateway } from './notifications.gateway';
+
 describe('NotificationsService', () => {
   let service: NotificationsService;
   let repo: any;
@@ -29,6 +33,18 @@ describe('NotificationsService', () => {
         {
           provide: EventEmitter2,
           useValue: { emit: jest.fn() },
+        },
+        {
+          provide: MailService,
+          useValue: { sendForgotPasswordEmail: jest.fn(), sendEmail: jest.fn() },
+        },
+        {
+          provide: UsersService,
+          useValue: { findById: jest.fn(), findByEmail: jest.fn() },
+        },
+        {
+          provide: NotificationsGateway,
+          useValue: { sendNotificationToUser: jest.fn() },
         },
       ],
     }).compile();

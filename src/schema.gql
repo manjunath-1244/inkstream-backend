@@ -1,0 +1,108 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type User {
+  id: ID!
+  email: String!
+  username: String
+  displayName: String
+  role: Role!
+  bio: String
+  avatarUrl: String
+  website: String
+  createdAt: DateTime!
+}
+
+"""The role of the user within the platform"""
+enum Role {
+  USER
+  CREATOR
+  MODERATOR
+  ADMIN
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type Category {
+  id: ID!
+  name: String!
+  slug: String!
+  description: String
+  createdAt: DateTime!
+}
+
+type Tag {
+  id: ID!
+  name: String!
+  slug: String!
+  createdAt: DateTime!
+}
+
+type Post {
+  id: ID!
+  title: String!
+  slug: String!
+  contentMarkdown: String!
+  excerpt: String
+  status: PostStatus!
+  visibility: PostVisibility!
+  isHidden: Boolean!
+  readingTimeMinutes: Int!
+  viewCount: Int!
+  likeCount: Int!
+  commentCount: Int!
+  shareCount: Int!
+  coverImageUrl: String
+  authorId: String!
+  author: User!
+  category: Category
+  tags: [Tag!]!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+"""The status of the post (DRAFT or PUBLISHED)"""
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+}
+
+"""The visibility of the post (PUBLIC or PREMIUM)"""
+enum PostVisibility {
+  PUBLIC
+  PREMIUM
+}
+
+type PaginationMeta {
+  totalItems: Int!
+  itemCount: Int!
+  itemsPerPage: Int!
+  totalPages: Int!
+  currentPage: Int!
+}
+
+type PaginatedPosts {
+  items: [Post!]!
+  meta: PaginationMeta!
+}
+
+type Query {
+  """Get a user by ID"""
+  user(id: ID!): User!
+
+  """Get paginated list of all published posts"""
+  posts(page: Int, limit: Int, userId: String): PaginatedPosts!
+
+  """Get paginated list of trending posts within the last 7 days"""
+  trendingPosts(page: Int, limit: Int, userId: String): PaginatedPosts!
+
+  """Get a single post by its ID or slug"""
+  post(idOrSlug: String!): Post!
+
+  """Get all tags"""
+  tags: [Tag!]!
+}

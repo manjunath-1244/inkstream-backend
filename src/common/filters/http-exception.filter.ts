@@ -11,6 +11,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger('HttpException');
 
   catch(exception: HttpException, host: ArgumentsHost) {
+    if (host.getType() !== 'http') {
+      throw exception;
+    }
+
     const ctx = host.switchToHttp();
     const response = ctx.getResponse();
     const request = ctx.getRequest();

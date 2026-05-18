@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inkstream-backend-deployment
+  labels:
+    app: inkstream-backend
+spec:
+  # Maintain 3 active container replicas for high availability & load balancing
+  replicas: 3
+  
+  # Rolling update strategy ensures zero downtime during releases
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+      
+  selector:
+    matchLabels:
+      app: inkstream-backend
+      
+  template:
+    metadata:
+      labels:
+        app: inkstream-backend
+    spec:
+      containers:
+        - name: inkstream-backend
+          # Defaults to your GitHub package registry image.
+          # Update tag v1.0.0 or commit SHA in your deployment pipeline.
+          image: ghcr.io/manjunath-1244/inkstream-backend:latest
+          imagePullPolicy: Always
+          
+          ports:
+            - containerPort: 3000
+              name: http
+              
+          # Resource requests and limits prevent containers from exhausting server resources
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+              
+          # Link all public configs and secure secrets directly as environment variables
+          envFrom:
+            - configMapRef:
+                name: inkstream-backend-config
+            - secretRef:
+                name: inkstream-backend-secrets
+                
+          # Readiness probe ensures the container is ready to receive web traffic
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+            
+          # Liveness probe monitors if the container is running or needs a restart
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3

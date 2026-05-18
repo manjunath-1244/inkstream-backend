@@ -7,6 +7,7 @@ import { User, Role } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { NotFoundException, ForbiddenException } from '@nestjs/common';
+import { RedisService } from '../redis/redis.service';
 
 describe('CommentsService', () => {
   let service: CommentsService;
@@ -39,6 +40,15 @@ describe('CommentsService', () => {
         {
           provide: EventEmitter2,
           useValue: { emit: jest.fn() },
+        },
+        {
+          provide: RedisService,
+          useValue: {
+            get: jest.fn(),
+            set: jest.fn(),
+            del: jest.fn(),
+            invalidateByPattern: jest.fn(),
+          },
         },
       ],
     }).compile();

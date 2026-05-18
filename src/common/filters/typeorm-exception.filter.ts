@@ -6,6 +6,10 @@ export class TypeOrmExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger('DatabaseException');
 
   catch(exception: QueryFailedError, host: ArgumentsHost) {
+    if (host.getType() !== 'http') {
+      throw exception;
+    }
+
     const ctx = host.switchToHttp();
     const response = ctx.getResponse();
     const request = ctx.getRequest();

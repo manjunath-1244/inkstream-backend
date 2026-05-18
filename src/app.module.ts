@@ -28,6 +28,10 @@ import { HealthModule } from './modules/health/health.module';
 import { ModerationModule } from './modules/moderation/moderation.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
 import { MailModule } from './modules/mail/mail.module';
+import { RedisModule } from './modules/redis/redis.module';
+import { GraphQLModule } from '@nestjs/graphql';
+import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
+import { join } from 'path';
 
 @Module({
   imports: [
@@ -78,6 +82,13 @@ import { MailModule } from './modules/mail/mail.module';
     ModerationModule,
     UploadsModule,
     MailModule,
+    RedisModule,
+    GraphQLModule.forRoot<ApolloDriverConfig>({
+      driver: ApolloDriver,
+      autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
+      playground: true,
+      introspection: true,
+    }),
   ],
   controllers: [AppController],
   providers: [

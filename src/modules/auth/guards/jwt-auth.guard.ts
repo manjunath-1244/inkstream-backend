@@ -6,6 +6,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
+import { GqlExecutionContext } from '@nestjs/graphql';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
@@ -64,5 +65,15 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     }
 
     throw err || new UnauthorizedException();
+  }
+
+  override getRequest(context: ExecutionContext) {
+    if (context.getType<string>() === 'graphql') {
+      const gqlContext = GqlExecutionContext.create(context);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      return gqlContext.getContext().req;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return context.switchToHttp().getRequest();
   }
 }

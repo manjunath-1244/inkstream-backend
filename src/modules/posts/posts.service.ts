@@ -16,6 +16,7 @@ import { Role } from '../users/entities/user.entity';
 import { Share } from './entities/share.entity';
 import { Comment } from '../comments/entities/comment.entity';
 import { PostLike } from '../likes/entities/post-like.entity';
+import { RedisService } from '../redis/redis.service';
 
 @Injectable()
 export class PostsService {
@@ -33,7 +34,12 @@ export class PostsService {
     @InjectRepository(PostLike)
     private readonly postLikeRepository: Repository<PostLike>,
     private readonly eventEmitter: EventEmitter2,
+    private readonly redisService: RedisService,
   ) {}
+
+  async invalidateTrendingCache() {
+    await this.redisService.invalidateByPattern('trending:*');
+  }
 
   private getBaseWhereClause(baseConditions: any = {}): any {
     return {
@@ -85,6 +91,7 @@ export class PostsService {
 
     if (savedPost.status === PostStatus.PUBLISHED) {
       await this.notifyFollowers(savedPost);
+      await this.invalidateTrendingCache();
     }
 
     return savedPost;
@@ -173,6 +180,8 @@ export class PostsService {
       await this.notifyFollowers(savedPost);
     }
 
+    await this.invalidateTrendingCache();
+
     return savedPost;
   }
 
@@ -202,6 +211,7 @@ export class PostsService {
     }
 
     await this.postRepository.softDelete(id);
+    await this.invalidateTrendingCache();
   }
 
   async incrementViewCount(id: string): Promise<void> {
@@ -225,6 +235,7 @@ export class PostsService {
 
     // 2. Increment the aggregate counter
     await this.postRepository.increment({ id: post.id }, 'shareCount', 1);
+    await this.invalidateTrendingCache();
   }
 
   async getShareStats(postId: string) {
@@ -346,6 +357,12 @@ export class PostsService {
     const { page = 1, limit = 10 } = paginationDto;
     const skip = (page - 1) * limit;
 
+    const cacheKey = `trending:page:${page}:limit:${limit}:user:${userId || 'anonymous'}`;
+    const cachedData = await this.redisService.get(cacheKey);
+    if (cachedData) {
+      return JSON.parse(cachedData) as { items: Post[]; meta: any };
+    }
+
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
@@ -403,10 +420,11 @@ export class PostsService {
     }
 
     queryBuilder
-      .orderBy(
-        '( (SELECT COUNT(*) FROM post_likes WHERE "postId" = post.id AND "createdAt" >= :sevenDaysAgo) * 3 + (SELECT COUNT(*) FROM comments WHERE "postId" = post.id AND "createdAt" >= :sevenDaysAgo AND "deletedAt" IS NULL) * 2 + (SELECT COUNT(*) FROM shares WHERE "postId" = post.id AND "createdAt" >= :sevenDaysAgo) * 4 )',
-        'DESC',
+      .addSelect(
+        '((SELECT COUNT(*) FROM post_likes WHERE "postId" = post.id AND "createdAt" >= :sevenDaysAgo) * 3 + (SELECT COUNT(*) FROM comments WHERE "postId" = post.id AND "createdAt" >= :sevenDaysAgo AND "deletedAt" IS NULL) * 2 + (SELECT COUNT(*) FROM shares WHERE "postId" = post.id AND "createdAt" >= :sevenDaysAgo) * 4)',
+        'post_score',
       )
+      .orderBy('post_score', 'DESC')
       .addOrderBy('post.createdAt', 'DESC')
       .setParameters({
         sevenDaysAgo,
@@ -420,7 +438,7 @@ export class PostsService {
     // the queryBuilder.orderBy already handles it in SQL.
     const [items, total] = await queryBuilder.getManyAndCount();
 
-    return {
+    const response = {
       items,
       meta: {
         totalItems: total,
@@ -430,6 +448,11 @@ export class PostsService {
         currentPage: page,
       },
     };
+
+    // Cache the result in Redis for 1 hour (3600 seconds)
+    await this.redisService.set(cacheKey, JSON.stringify(response), 3600);
+
+    return response;
   }
 
   async findByTag(

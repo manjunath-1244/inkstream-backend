@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: inkstream-backend-service
+  labels:
+    app: inkstream-backend
+spec:
+  # ClusterIP keeps the service securely routed inside the Kubernetes private cluster network.
+  # Use an Ingress Controller (like NGINX Ingress) to expose it to the public internet.
+  type: ClusterIP
+  
+  selector:
+    app: inkstream-backend
+    
+  ports:
+    - protocol: TCP
+      port: 80         # The port the service listens on inside the cluster
+      targetPort: 3000 # The port on the container we route traffic to
+      name: http

@@ -20,9 +20,9 @@ export class UploadsController {
   ) {
     const extension = fileName.split('.').pop();
     const key = `uploads/${uuidv4()}.${extension}`;
-    
+
     const url = await this.s3Service.getPresignedUrl(key, fileType);
-    
+
     return {
       url,
       key,

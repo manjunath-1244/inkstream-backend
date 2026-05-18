@@ -1,6 +1,11 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { S3Client, PutObjectCommand, CreateBucketCommand, HeadBucketCommand } from '@aws-sdk/client-s3';
+import {
+  S3Client,
+  PutObjectCommand,
+  CreateBucketCommand,
+  HeadBucketCommand,
+} from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 @Injectable()
@@ -16,7 +21,7 @@ export class S3Service implements OnModuleInit {
         accessKeyId: this.configService.get<string>('S3_ACCESS_KEY')!,
         secretAccessKey: this.configService.get<string>('S3_SECRET_KEY')!,
       },
-      forcePathStyle: true, // Required for MinIO 
+      forcePathStyle: true, // Required for MinIO
     });
     this.bucket = this.configService.get<string>('S3_BUCKET')!;
   }
@@ -30,15 +35,24 @@ export class S3Service implements OnModuleInit {
       await this.s3Client.send(new HeadBucketCommand({ Bucket: this.bucket }));
     } catch (error: any) {
       // For MinIO/S3, if the bucket doesn't exist, it throws a specific error
-      if (error.name === 'NotFound' || error.$metadata?.httpStatusCode === 404) {
+      if (
+        error.name === 'NotFound' ||
+        error.$metadata?.httpStatusCode === 404
+      ) {
         try {
-          await this.s3Client.send(new CreateBucketCommand({ Bucket: this.bucket }));
+          await this.s3Client.send(
+            new CreateBucketCommand({ Bucket: this.bucket }),
+          );
           console.log(`Bucket "${this.bucket}" created successfully.`);
         } catch (createError: any) {
-          console.error(`Failed to create bucket "${this.bucket}": ${createError.message}`);
+          console.error(
+            `Failed to create bucket "${this.bucket}": ${createError.message}`,
+          );
         }
       } else {
-        console.error(`Error checking bucket "${this.bucket}": ${error.message}`);
+        console.error(
+          `Error checking bucket "${this.bucket}": ${error.message}`,
+        );
       }
     }
   }

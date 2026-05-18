@@ -1,0 +1,345 @@
+{
+  "info": {
+    "name": "InkStream API Collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"creator@inkstream.com\",\n  \"password\": \"password123\",\n  \"displayName\": \"Creator Account\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/auth/register",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login User",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"creator@inkstream.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/auth/login",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{YOUR_REFRESH_TOKEN}}\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/auth/refresh",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["auth", "refresh"]
+            }
+          }
+        },
+        {
+          "name": "Get Profile Info (/auth/me)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" }
+            ],
+            "url": {
+              "raw": "http://localhost:3000/auth/me",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["auth", "me"]
+            }
+          }
+        },
+        {
+          "name": "Forgot Password Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"creator@inkstream.com\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/auth/forgot-password",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["auth", "forgot-password"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "User Profiles",
+      "item": [
+        {
+          "name": "Get Public Profile",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:3000/users/creator",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["users", "creator"]
+            }
+          }
+        },
+        {
+          "name": "Update Bio & Details",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bio\": \"Blogger and Creator of incredible contents!\",\n  \"website\": \"https://inkstream.com\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/users/me",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["users", "me"]
+            }
+          }
+        },
+        {
+          "name": "Upgrade Self to Creator",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" }
+            ],
+            "url": {
+              "raw": "http://localhost:3000/users/me/upgrade-to-creator",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["users", "me", "upgrade-to-creator"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Posts",
+      "item": [
+        {
+          "name": "Create Post",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Discovering WebSockets inside NestJS\",\n  \"contentMarkdown\": \"In this blog we explore WebSockets in real time using socket.io\",\n  \"category\": \"Technology\",\n  \"tags\": [\"nest\", \"websocket\", \"realtime\"],\n  \"visibility\": \"PUBLIC\",\n  \"status\": \"PUBLISHED\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/posts",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["posts"]
+            }
+          }
+        },
+        {
+          "name": "Get Paginated Posts",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:3000/posts?page=1&limit=10",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["posts"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Trending Posts",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:3000/posts/trending",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["posts", "trending"]
+            }
+          }
+        },
+        {
+          "name": "Get Single Post by Slug",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:3000/posts/discovering-websockets-inside-nestjs",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["posts", "discovering-websockets-inside-nestjs"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Comments & Likes",
+      "item": [
+        {
+          "name": "Post top level comment",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"body\": \"This is an awesome real-time technology article!\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/posts/{{POST_UUID}}/comments",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["posts", "{{POST_UUID}}", "comments"]
+            }
+          }
+        },
+        {
+          "name": "Toggle Like on Post",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" }
+            ],
+            "url": {
+              "raw": "http://localhost:3000/posts/{{POST_UUID}}/like",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["posts", "{{POST_UUID}}", "like"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Subscriptions",
+      "item": [
+        {
+          "name": "Get Active Subscription Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" }
+            ],
+            "url": {
+              "raw": "http://localhost:3000/subscriptions/me",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["subscriptions", "me"]
+            }
+          }
+        },
+        {
+          "name": "Checkout Plan",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"planCode\": \"PREMIUM\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/subscriptions/checkout",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["subscriptions", "checkout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "GraphQL API",
+      "item": [
+        {
+          "name": "Fetch Trending Posts via GraphQL",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query {\n  trendingPosts {\n    id\n    title\n    slug\n    visibility\n    readingTimeMinutes\n    author {\n      displayName\n      role\n    }\n  }\n}",
+                "variables": ""
+              }
+            },
+            "url": {
+              "raw": "http://localhost:3000/graphql",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["graphql"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

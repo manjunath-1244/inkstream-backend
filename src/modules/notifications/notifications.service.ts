@@ -1,10 +1,16 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  Inject,
+  forwardRef,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Notification, NotificationType } from './entities/notification.entity';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { MailService } from '../mail/mail.service';
 import { UsersService } from '../users/users.service';
+import { NotificationsGateway } from './notifications.gateway';
 
 @Injectable()
 export class NotificationsService {
@@ -13,6 +19,8 @@ export class NotificationsService {
     private readonly notificationsRepo: Repository<Notification>,
     private readonly mailService: MailService,
     private readonly usersService: UsersService,
+    @Inject(forwardRef(() => NotificationsGateway))
+    private readonly notificationsGateway: NotificationsGateway,
   ) {}
 
   async create(data: {
@@ -26,6 +34,17 @@ export class NotificationsService {
 
     const notification = this.notificationsRepo.create(data);
     const savedNotification = await this.notificationsRepo.save(notification);
+
+    // Push real-time notification via WebSockets
+    try {
+      this.notificationsGateway.sendNotificationToUser(
+        data.recipientId,
+        savedNotification,
+      );
+    } catch (wsError) {
+      // Gracefully catch any ws errors to prevent database/mail failures if ws fails
+      console.error('Failed to emit real-time socket notification:', wsError);
+    }
 
     // Send email notification
     const recipient = await this.usersService.findById(data.recipientId);

@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: inkstream-backend-config
+  labels:
+    app: inkstream-backend
+data:
+  NODE_ENV: "production"
+  PORT: "3000"
+  
+  # Database Configuration (pointing to internal cluster services)
+  DB_HOST: "postgres-service"
+  DB_PORT: "5432"
+  DB_NAME: "inkstream"
+  
+  # Redis Caching Configuration
+  REDIS_HOST: "redis-service"
+  REDIS_PORT: "6379"
+  
+  # S3 / Object Storage Configuration
+  S3_ENDPOINT: "http://minio-service:9000"
+  S3_REGION: "us-east-1"
+  S3_BUCKET: "inkstream"
+  S3_PUBLIC_URL: "http://localhost:9000/inkstream" # Update to production domain in actual deployment
+  
+  # Mail Configuration
+  MAIL_HOST: "mailhog-service"
+  MAIL_PORT: "1025"
+  MAIL_FROM: "noreply@inkstream.com"
+  
+  # Throttling limits
+  THROTTLE_TTL: "60"
+  THROTTLE_LIMIT: "100"

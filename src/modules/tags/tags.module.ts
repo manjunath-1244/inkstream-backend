@@ -5,6 +5,7 @@ import { TagsController } from './tags.controller';
 import { Tag } from './entities/tag.entity';
 import { PostsModule } from '../posts/posts.module';
 import { UsersModule } from '../users/users.module';
+import { TagsResolver } from './tags.resolver';
 
 @Module({
   imports: [
@@ -12,7 +13,7 @@ import { UsersModule } from '../users/users.module';
     forwardRef(() => PostsModule),
     UsersModule,
   ],
-  providers: [TagsService],
+  providers: [TagsService, TagsResolver],
   controllers: [TagsController],
   exports: [TagsService],
 })

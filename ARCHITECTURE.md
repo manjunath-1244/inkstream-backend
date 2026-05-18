@@ -24,11 +24,17 @@ graph TD
     AppModule --> ModerationModule
     AppModule --> ReportsModule
     AppModule --> HealthModule
+    AppModule --> MailModule
+    AppModule --> S3Module
+    AppModule --> UploadsModule
+    AppModule --> RedisModule
 
     AuthModule --> UsersModule
+    AuthModule --> MailModule
     PostsModule --> UsersModule
     PostsModule --> CategoriesModule
     PostsModule --> TagsModule
+    PostsModule --> RedisModule
     CommentsModule --> UsersModule
     CommentsModule --> PostsModule
     LikesModule --> UsersModule
@@ -36,9 +42,11 @@ graph TD
     LikesModule --> CommentsModule
     SubscriptionsModule --> UsersModule
     NotificationsModule --> UsersModule
+    NotificationsModule --> MailModule
     AdminModule --> AuditModule
     ModerationModule --> UsersModule
     ReportsModule --> UsersModule
+    UploadsModule --> S3Module
 ```
 
 ### Domain Ownership
@@ -47,6 +55,9 @@ graph TD
 - **PostsModule**: Core content engine including draft management, slug generation, and reading time calculation.
 - **SubscriptionsModule**: Gating logic and plan lifecycle.
 - **ModerationModule**: Business logic for content suppression and user safety.
+- **MailModule**: Handles transactional SMTP emails to MailHog.
+- **S3Module & UploadsModule**: Manages MinIO/S3 integrations and presigned URL generations.
+- **RedisModule**: Caches trending posts calculations for extreme performance.
 
 ## 2. Concept to Feature Mapping
 

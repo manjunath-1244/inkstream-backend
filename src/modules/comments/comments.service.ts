@@ -13,6 +13,7 @@ import { UpdateCommentDto } from './dto/update-comment.dto';
 import { Role } from '../users/entities/user.entity';
 import { Post } from '../posts/entities/post.entity';
 import { UsersService } from '../users/users.service';
+import { RedisService } from '../redis/redis.service';
 
 @Injectable()
 export class CommentsService {
@@ -23,6 +24,7 @@ export class CommentsService {
     private readonly postRepo: Repository<Post>,
     private readonly eventEmitter: EventEmitter2,
     private readonly usersService: UsersService,
+    private readonly redisService: RedisService,
   ) {}
 
   async create(postId: string, authorId: string, dto: CreateCommentDto) {
@@ -82,6 +84,8 @@ export class CommentsService {
         commentId: savedComment.id,
       });
     }
+
+    await this.redisService.invalidateByPattern('trending:*');
 
     return savedComment;
   }
@@ -154,5 +158,6 @@ export class CommentsService {
 
     await this.commentRepo.softDelete(id);
     await this.postRepo.decrement({ id: comment.postId }, 'commentCount', 1);
+    await this.redisService.invalidateByPattern('trending:*');
   }
 }

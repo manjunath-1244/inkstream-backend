@@ -9,6 +9,7 @@ import { Comment } from '../comments/entities/comment.entity';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { UsersService } from '../users/users.service';
 import { ForbiddenException } from '@nestjs/common';
+import { RedisService } from '../redis/redis.service';
 
 @Injectable()
 export class LikesService {
@@ -20,6 +21,7 @@ export class LikesService {
     private readonly dataSource: DataSource,
     private readonly eventEmitter: EventEmitter2,
     private readonly usersService: UsersService,
+    private readonly redisService: RedisService,
   ) {}
 
   async togglePostLike(userId: string, postId: string) {
@@ -39,6 +41,7 @@ export class LikesService {
         await manager.remove(existingLike);
         post.likeCount = Math.max(0, post.likeCount - 1);
         await manager.save(post);
+        await this.redisService.invalidateByPattern('trending:*');
         return { liked: false, count: post.likeCount };
       } else {
         const newLike = manager.create(PostLike, { userId, postId });
@@ -51,6 +54,8 @@ export class LikesService {
           authorId: post.authorId,
           postId: post.id,
         });
+
+        await this.redisService.invalidateByPattern('trending:*');
 
         return { liked: true, count: post.likeCount };
       }

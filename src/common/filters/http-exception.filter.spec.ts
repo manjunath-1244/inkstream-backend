@@ -31,6 +31,7 @@ describe('HttpExceptionFilter', () => {
     });
 
     const host = {
+      getType: jest.fn().mockReturnValue('http'),
       switchToHttp: jest.fn().mockReturnThis(),
       getResponse: mockGetResponse,
       getRequest: mockGetRequest,

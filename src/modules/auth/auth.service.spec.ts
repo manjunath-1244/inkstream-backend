@@ -7,6 +7,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { ConflictException, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
+import { MailService } from '../mail/mail.service';
 
 jest.mock('bcrypt', () => ({
   hash: jest.fn().mockResolvedValue('hashed_password'),
@@ -56,6 +57,10 @@ describe('AuthService', () => {
         {
           provide: getRepositoryToken(RefreshToken),
           useValue: mockRefreshTokenRepo,
+        },
+        {
+          provide: MailService,
+          useValue: { sendForgotPasswordEmail: jest.fn(), sendEmail: jest.fn() },
         },
       ],
     }).compile();

@@ -19,10 +19,13 @@ FROM node:20-alpine AS runtime
 
 WORKDIR /app
 
-# Copy only the necessary files from the builder stage
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package*.json ./
+# Pre-create src directory and set ownership to node user
+RUN mkdir -p /app/src && chown -R node:node /app
+
+# Copy only the necessary files from the builder stage with correct ownership
+COPY --from=builder --chown=node:node /app/dist ./dist
+COPY --from=builder --chown=node:node /app/node_modules ./node_modules
+COPY --from=builder --chown=node:node /app/package*.json ./
 
 # Set environment to production
 ENV NODE_ENV=production

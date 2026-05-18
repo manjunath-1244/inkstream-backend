@@ -7,6 +7,7 @@ import { DataSource } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { UsersService } from '../users/users.service';
 import { NotFoundException } from '@nestjs/common';
+import { RedisService } from '../redis/redis.service';
 
 describe('LikesService', () => {
   let service: LikesService;
@@ -49,6 +50,15 @@ describe('LikesService', () => {
         {
           provide: UsersService,
           useValue: { isBlocked: jest.fn().mockResolvedValue(false) },
+        },
+        {
+          provide: RedisService,
+          useValue: {
+            get: jest.fn(),
+            set: jest.fn(),
+            del: jest.fn(),
+            invalidateByPattern: jest.fn(),
+          },
         },
       ],
     }).compile();

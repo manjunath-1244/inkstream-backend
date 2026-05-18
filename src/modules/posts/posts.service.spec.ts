@@ -9,6 +9,7 @@ import { Comment } from '../comments/entities/comment.entity';
 import { PostLike } from '../likes/entities/post-like.entity';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ForbiddenException } from '@nestjs/common';
+import { RedisService } from '../redis/redis.service';
 
 describe('PostsService', () => {
   let service: PostsService;
@@ -69,6 +70,15 @@ describe('PostsService', () => {
         {
           provide: EventEmitter2,
           useValue: { emit: jest.fn() },
+        },
+        {
+          provide: RedisService,
+          useValue: {
+            get: jest.fn(),
+            set: jest.fn(),
+            del: jest.fn(),
+            invalidateByPattern: jest.fn(),
+          },
         },
       ],
     }).compile();
@@ -158,7 +168,7 @@ describe('PostsService', () => {
       const result = await service.getTrending({ page: 1, limit: 10 });
       expect(result.items).toHaveLength(1);
       expect(mockQueryBuilder.orderBy).toHaveBeenCalled();
-      expect(mockQueryBuilder.addSelect).toHaveBeenCalledTimes(3);
+      expect(mockQueryBuilder.addSelect).toHaveBeenCalledTimes(4);
     });
 
     it('should apply block filters in trending if userId provided', async () => {

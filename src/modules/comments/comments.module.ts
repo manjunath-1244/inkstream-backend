@@ -5,9 +5,14 @@ import { CommentsController } from './comments.controller';
 import { Comment } from './entities/comment.entity';
 import { Post } from '../posts/entities/post.entity';
 import { UsersModule } from '../users/users.module';
+import { RedisModule } from '../redis/redis.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Comment, Post]), UsersModule],
+  imports: [
+    TypeOrmModule.forFeature([Comment, Post]),
+    UsersModule,
+    RedisModule,
+  ],
   controllers: [CommentsController],
   providers: [CommentsService],
   exports: [CommentsService],
