@@ -22,6 +22,7 @@ import { PaginationDto } from '../../common/dto/pagination.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { Public } from '../auth/decorators/public.decorator';
 import {
   ApiTags,
   ApiOperation,
@@ -86,6 +87,7 @@ export class UsersController {
     return this.usersService.updateRole(id, role);
   }
 
+  @Public()
   @Get(':username')
   @ApiOperation({ summary: 'Get user profile by username' })
   @ApiParam({ name: 'username', description: 'Unique username' })
@@ -171,6 +173,7 @@ export class UsersController {
     return { message: 'User unblocked successfully' };
   }
 
+  @Public()
   @Get(':username/posts')
   @ApiOperation({ summary: 'Get all posts by a specific user' })
   @ApiParam({ name: 'username', description: 'User username' })
@@ -184,6 +187,7 @@ export class UsersController {
     return this.postsService.findByUser(user.id, paginationDto);
   }
 
+  @Public()
   @Get(':username/followers')
   @ApiOperation({ summary: 'Get list of followers for a user' })
   @ApiParam({ name: 'username', description: 'User username' })
@@ -197,6 +201,7 @@ export class UsersController {
     return user.followers;
   }
 
+  @Public()
   @Get(':username/following')
   @ApiOperation({ summary: 'Get list of users followed by a user' })
   @ApiParam({ name: 'username', description: 'User username' })

@@ -3,11 +3,12 @@ import {
   UnauthorizedException,
   ConflictException,
   ForbiddenException,
+  OnModuleInit,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, IsNull } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import ms from 'ms';
 import * as crypto from 'crypto';
@@ -18,7 +19,16 @@ import { RefreshToken } from './entities/refresh-token.entity';
 import { MailService } from '../mail/mail.service';
 
 @Injectable()
-export class AuthService {
+export class AuthService implements OnModuleInit {
+  async onModuleInit() {
+    try {
+      await this.refreshTokenRepo.clear();
+      console.log('Cleared all refresh tokens from DB on startup');
+    } catch (e) {
+      console.error('Failed to clear refresh tokens on startup:', e);
+    }
+  }
+
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
@@ -73,6 +83,17 @@ export class AuthService {
 
     const accessToken = this.jwtService.sign(payload);
 
+    // Clean up expired or revoked tokens to keep the table size small and queries fast
+    try {
+      await this.refreshTokenRepo
+        .createQueryBuilder()
+        .delete()
+        .where('expiresAt < :now OR revokedAt IS NOT NULL', { now: new Date() })
+        .execute();
+    } catch (cleanupError) {
+      console.error('Failed to clean up old refresh tokens:', cleanupError);
+    }
+
     // Generate Refresh Token
     const refreshTokenStr = crypto.randomBytes(40).toString('hex');
     const refreshTokenHash = await bcrypt.hash(refreshTokenStr, 10);
@@ -100,7 +121,7 @@ export class AuthService {
 
   async refreshTokens(refreshTokenStr: string) {
     const tokens = await this.refreshTokenRepo.find({
-      where: { revokedAt: undefined },
+      where: { revokedAt: IsNull() },
     });
 
     let validToken: RefreshToken | null = null;
@@ -127,7 +148,7 @@ export class AuthService {
 
   async logout(refreshTokenStr: string) {
     const tokens = await this.refreshTokenRepo.find({
-      where: { revokedAt: undefined },
+      where: { revokedAt: IsNull() },
     });
 
     for (const token of tokens) {

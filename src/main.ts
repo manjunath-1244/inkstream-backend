@@ -15,7 +15,11 @@ async function bootstrap() {
 
   // Security features
   app.enableCors();
-  app.use(helmet());
+  app.use(
+    helmet({
+      contentSecurityPolicy: false,
+    }),
+  );
 
   // Swagger Configuration
   if (

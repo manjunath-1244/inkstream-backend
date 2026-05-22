@@ -15,7 +15,20 @@ export class RolesGuard implements CanActivate {
     if (!requiredRoles) {
       return true;
     }
-    const { user } = context.switchToHttp().getRequest();
+    
+    let user;
+    if (context.getType<string>() === 'graphql') {
+      const { GqlExecutionContext } = require('@nestjs/graphql');
+      const gqlContext = GqlExecutionContext.create(context);
+      user = gqlContext.getContext().req?.user;
+    } else {
+      user = context.switchToHttp().getRequest().user;
+    }
+
+    console.log('RolesGuard -> Context Type:', context.getType<string>());
+    console.log('RolesGuard -> User from req:', user);
+    console.log('RolesGuard -> Required Roles:', requiredRoles);
+
     return requiredRoles.some((role) => user?.role === role);
   }
 }

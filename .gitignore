@@ -51,3 +51,7 @@ Thumbs.db
 .env
 .env.test
 .env.production
+
+# Playwright
+playwright-report/
+test-results/
