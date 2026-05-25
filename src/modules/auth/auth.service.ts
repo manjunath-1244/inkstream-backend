@@ -54,7 +54,8 @@ export class AuthService implements OnModuleInit {
         dto.email.split('@')[0] + Math.floor(Math.random() * 1000),
     });
 
-    return this.generateTokens(user);
+    const populatedUser = await this.usersService.findById(user.id);
+    return this.generateTokens(populatedUser);
   }
 
   async validateUser(email: string, pass: string): Promise<any> {
@@ -209,5 +210,14 @@ export class AuthService implements OnModuleInit {
     );
 
     return { message: 'Password reset successfully' };
+  }
+
+  async getMe(userId: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+    const { passwordHash: _ph, resetPasswordToken: _rpt, resetPasswordExpires: _rpe, ...result } = user;
+    return result;
   }
 }

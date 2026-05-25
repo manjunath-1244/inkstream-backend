@@ -17,6 +17,7 @@ import { Share } from './entities/share.entity';
 import { Comment } from '../comments/entities/comment.entity';
 import { PostLike } from '../likes/entities/post-like.entity';
 import { RedisService } from '../redis/redis.service';
+import { Category } from '../categories/entities/category.entity';
 
 @Injectable()
 export class PostsService {
@@ -33,6 +34,8 @@ export class PostsService {
     private readonly commentRepository: Repository<Comment>,
     @InjectRepository(PostLike)
     private readonly postLikeRepository: Repository<PostLike>,
+    @InjectRepository(Category)
+    private readonly categoryRepository: Repository<Category>,
     private readonly eventEmitter: EventEmitter2,
     private readonly redisService: RedisService,
   ) {}
@@ -74,17 +77,38 @@ export class PostsService {
   }
 
   async create(createPostDto: CreatePostDto, authorId: string): Promise<Post> {
-    const { tagIds, ...postData } = createPostDto;
+    const { tagIds, category, tags, ...postData } = createPostDto;
 
     const post = this.postRepository.create({
       ...postData,
       authorId,
     });
 
+    if (category) {
+      const foundCategory = await this.categoryRepository.findOne({
+        where: [{ name: category }, { slug: category.toLowerCase().replace(/ /g, '-') }],
+      });
+      if (foundCategory) {
+        post.categoryId = foundCategory.id;
+      }
+    }
+
     if (tagIds && tagIds.length > 0) {
       post.tags = await this.tagRepository.find({
         where: { id: In(tagIds) },
       });
+    } else if (tags && tags.length > 0) {
+      const resolvedTags: Tag[] = [];
+      for (const tagName of tags) {
+        const slug = tagName.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
+        let tag = await this.tagRepository.findOne({ where: { slug } });
+        if (!tag) {
+          tag = this.tagRepository.create({ name: tagName, slug });
+          tag = await this.tagRepository.save(tag);
+        }
+        resolvedTags.push(tag);
+      }
+      post.tags = resolvedTags;
     }
 
     const savedPost = await this.postRepository.save(post);

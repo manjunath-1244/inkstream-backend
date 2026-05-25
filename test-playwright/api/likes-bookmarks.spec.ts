@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { createTestUser, upgradeToCreator } from './test-utils';
+import { createTestUser, upgradeToCreator } from '../test-utils';
 
 test.describe('Likes & Bookmarks API', () => {
   test.describe.configure({ mode: 'serial' });

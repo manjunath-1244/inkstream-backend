@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { createTestUser } from './test-utils';
+import { createTestUser } from '../test-utils';
 
 test.describe('Subscriptions & Notifications API', () => {
   test.describe.configure({ mode: 'serial' });

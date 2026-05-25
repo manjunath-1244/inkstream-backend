@@ -101,8 +101,8 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiOkResponse({ description: 'Returns current user data.' })
-  getMe(@Request() req: any): any {
-    return req.user;
+  async getMe(@Request() req: any): Promise<any> {
+    return this.authService.getMe(req.user.id);
   }
 
   @Get('admin-only')

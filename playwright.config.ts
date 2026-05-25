@@ -21,7 +21,11 @@ export default defineConfig({
   use: {
     /* Base URL to use in actions like `await request.get('/')`. */
     baseURL: 'http://localhost:3000',
-    /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: 'on-first-retry',
+    /* Collect trace and video for all test runs to view in the report. */
+    trace: 'on',
+    video: 'on',
+    launchOptions: {
+      slowMo: process.env.SLOWMO ? parseInt(process.env.SLOWMO, 10) : 0,
+    },
   },
 });

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { createTestUser, upgradeToAdmin } from './test-utils';
+import { createTestUser, upgradeToAdmin } from '../test-utils';
 
 test.describe('Categories & Tags API', () => {
   test.describe.configure({ mode: 'serial' });

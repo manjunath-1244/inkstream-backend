@@ -64,4 +64,15 @@ export class CreatePostDto {
   @IsOptional()
   @IsString()
   coverImageUrl?: string;
+
+  @ApiProperty({ example: 'Technology', required: false })
+  @IsOptional()
+  @IsString()
+  category?: string;
+
+  @ApiProperty({ example: ['automation', 'playwright'], required: false })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  tags?: string[];
 }

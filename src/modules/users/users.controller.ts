@@ -44,8 +44,13 @@ export class UsersController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiOkResponse({ type: User, description: 'Returns current user data' })
-  getMe(@CurrentUser() user: any): any {
-    return user;
+  async getMe(@CurrentUser() user: any): Promise<any> {
+    const fullUser = await this.usersService.findById(user.id);
+    if (!fullUser) {
+      throw new NotFoundException('User not found');
+    }
+    const { passwordHash: _ph, resetPasswordToken: _rpt, resetPasswordExpires: _rpe, ...result } = fullUser;
+    return result;
   }
 
   @Patch('me')
